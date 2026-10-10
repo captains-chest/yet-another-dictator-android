@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="subtype_label">Diktering</string>
+
+    <string name="section_microphone">Mikrofon</string>
+    <string name="section_keyboard">Tastatur</string>
+    <string name="section_language">Sprog</string>
+    <string name="section_model">Model</string>
+    <string name="section_try">Prøv det</string>
+    <string name="section_about">Om</string>
+
+    <string name="microphone_allowed">Mikrofonen er tilladt</string>
+    <string name="microphone_footnote">Dictator lytter kun, mens du dikterer, og omsætter tale til tekst på telefonen. Lyd gemmes aldrig.</string>
+    <string name="action_allow_microphone">Tillad mikrofon</string>
+    <string name="action_open_settings">Åbn Indstillinger</string>
+
+    <string name="keyboard_steps">Slå Dictator til under Indstillinger → System → Tastatur → Skærmtastatur, og skift til det i et vilkårligt tekstfelt.</string>
+    <string name="keyboard_enabled">Dictator-tastaturet er slået til.</string>
+    <string name="action_enable_keyboard">Slå tastatur til</string>
+    <string name="action_switch_keyboard">Skift tastatur</string>
+    <string name="keyboard_footnote">Android advarer om, at et tastatur kan indsamle det, du skriver. Dictator har ingen netværksadgang og gemmer intet af det, du skriver eller siger.</string>
+
+    <string name="language_automatic">Automatisk</string>
+
+    <string name="model_bundled">%1$s følger med appen og downloades aldrig.</string>
+    <string name="model_missing">Denne version har ingen talemodel og kan ikke omsætte tale. Se README.</string>
+
+    <string name="try_placeholder">Tryk her, skift til Dictator-tastaturet, og dikter.</string>
+
+    <string name="about_version">Version %1$s</string>
+    <string name="about_privacy">Offline: Dictator har ikke adgang til internettet. MIT-licens.</string>
+    <string name="action_notices">Licenser</string>
+    <string name="action_ok">OK</string>
+    <string name="whats_new_title">Nyheder</string>
+    <string name="whats_new_welcome">Velkommen til Dictator</string>
+
+    <string name="keyboard_switch">Næste tastatur</string>
+    <string name="keyboard_needs_microphone">Åbn Dictator, og tillad mikrofonen for at diktere.</string>
+    <string name="action_open_dictator">Åbn Dictator</string>
+    <string name="status_loading">Indlæser talemodellen…</string>
+    <string name="caption_ready">Tryk for at starte/stoppe · Hold for at tale</string>
+    <string name="caption_recording">Slip for at afslutte, eller tryk igen</string>
+    <string name="caption_transcribing">Omsætter…</string>
+    <string name="mic_label">Dikter</string>
+    <string name="mic_hint">start eller stop diktering</string>
+    <string name="action_try_again">Prøv igen</string>
+    <string name="action_discard">Kassér</string>
+
+    <string name="error_no_field">Tryk først i et tekstfelt.</string>
+    <string name="error_field_gone">Tekstfeltet forsvandt, før teksten kunne skrives.</string>
+</resources>

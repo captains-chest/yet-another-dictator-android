@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "yet-another-dictator-android"
-include(":core")
+include(":core", ":app")
