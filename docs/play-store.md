@@ -25,8 +25,8 @@ Switch to the Dictator keyboard in any text field, tap the big microphone and sp
 finish, or hold the button while you talk and let go when you are done. Dictator types the text
 where your cursor is, with the right spacing and capital letters.
 
-• Fully offline. Speech recognition runs on your phone with OpenAI's Whisper model. Dictator has no
-  internet permission at all, so it cannot send your voice or your text anywhere.
+• Private. Speech recognition runs on your phone with OpenAI's Whisper model. Audio never leaves the
+  device; the one-time model download (about 190 MB, Wi-Fi recommended) is the only network use.
 • Danish and English. Pick a language or let Dictator detect it.
 • Nothing is stored. Audio is kept in memory only while a dictation is transcribed, then
   discarded. Dictator keeps no history and never uses the clipboard.
@@ -57,8 +57,8 @@ Skift til Dictator-tastaturet i et tekstfelt, tryk på den store mikrofon, og ta
 afslutte, eller hold knappen nede, mens du taler, og slip, når du er færdig. Dictator skriver
 teksten, hvor markøren står, med de rigtige mellemrum og store bogstaver.
 
-• Helt offline. Talegenkendelsen kører på din telefon med OpenAI's Whisper-model. Dictator har slet
-  ikke adgang til internettet og kan derfor ikke sende din stemme eller din tekst nogen steder hen.
+• Privat. Talegenkendelsen kører på din telefon med OpenAI's Whisper-model. Lyd forlader aldrig
+  enheden; den ene download af modellen (ca. 190 MB, Wi-Fi anbefales) er den eneste brug af netværket.
 • Dansk og engelsk. Vælg et sprog, eller lad Dictator finde det selv.
 • Intet gemmes. Lyden findes kun i hukommelsen, mens en diktering bliver omsat, og slettes derefter.
   Dictator gemmer ingen historik og bruger aldrig udklipsholderen.
@@ -87,7 +87,8 @@ Kræver Android 12 eller nyere. Talemodellen (ca. 190 MB) installeres sammen med
 | Do you provide a way for users to request that their data is deleted? | Not applicable: nothing is collected |
 
 Why "No" is accurate: Google's definition of "collect" is transmitting data off the device. Audio
-is processed only on the device, in memory, and the app has no `INTERNET` permission. Nothing is
+is processed only on the device, in memory. The `INTERNET` permission is used only to download the
+speech model from Hugging Face (ADR 0006); nothing from the user is sent. Nothing is
 shared with third parties; there are no SDKs for analytics, ads or crash reporting. The listing
 will then show "No data collected" and "No data shared".
 

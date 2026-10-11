@@ -1,6 +1,6 @@
 # 4. Whisper Small (q5_1) is bundled in the APK; the app never downloads
 
-- Status: Accepted
+- Status: Superseded by [ADR 0006](0006-download-model-after-install.md) (2026-10-11)
 - Date: 2026-10-10
 
 ## Context

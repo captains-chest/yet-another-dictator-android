@@ -4,3 +4,4 @@
 # Entry points of the on-device JFK test (app/src/androidTest), which can run against the release build.
 -keep class com.captainduckay.dictator.android.WhisperTranscriber { public *; }
 -keep class com.captainduckay.dictator.android.SpeechModel { public *; }
+-keep class com.captainduckay.dictator.android.ModelDownloadWorker { public *; }

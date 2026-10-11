@@ -18,17 +18,14 @@
     <string name="keyboard_enabled">Dictator-tastaturet er slået til.</string>
     <string name="action_enable_keyboard">Slå tastatur til</string>
     <string name="action_switch_keyboard">Skift tastatur</string>
-    <string name="keyboard_footnote">Android advarer om, at et tastatur kan indsamle det, du skriver. Dictator har ingen netværksadgang og gemmer intet af det, du skriver eller siger.</string>
+    <string name="keyboard_footnote">Android advarer om, at et tastatur kan indsamle det, du skriver. Din lyd og tekst forlader aldrig enheden, og Dictator gemmer intet af det, du skriver eller siger.</string>
 
     <string name="language_automatic">Automatisk</string>
-
-    <string name="model_bundled">%1$s følger med appen og downloades aldrig.</string>
-    <string name="model_missing">Denne version har ingen talemodel og kan ikke omsætte tale. Se README.</string>
 
     <string name="try_placeholder">Tryk her, skift til Dictator-tastaturet, og dikter.</string>
 
     <string name="about_version">Version %1$s</string>
-    <string name="about_privacy">Offline: Dictator har ikke adgang til internettet. MIT-licens.</string>
+    <string name="about_privacy">Lyd forlader aldrig enheden; engangs-download af modellen er den eneste brug af netværket. MIT-licens.</string>
     <string name="action_notices">Licenser</string>
     <string name="action_ok">OK</string>
     <string name="whats_new_title">Nyheder</string>
@@ -48,4 +45,13 @@
 
     <string name="error_no_field">Tryk først i et tekstfelt.</string>
     <string name="error_field_gone">Tekstfeltet forsvandt, før teksten kunne skrives.</string>
+    <string name="model_installed">%1$s er downloadet og klar. Diktering virker offline.</string>
+    <string name="model_offer">Dictator skal bruge talemodellen %1$s (%2$s MB), som downloades én gang. Wi-Fi anbefales.</string>
+    <string name="model_allow_mobile">Download også over mobildata</string>
+    <string name="action_download_model">Download model (%1$s MB)</string>
+    <string name="model_progress">Downloader… %1$d af %2$d MB</string>
+    <string name="model_waiting">Venter på Wi-Fi (eller forbindelse) for at downloade modellen…</string>
+    <string name="model_failed">Downloaden mislykkedes. Prøv igen.</string>
+    <string name="action_cancel">Annuller</string>
+    <string name="model_footnote">Den ene download af modellen fra Hugging Face er appens eneste brug af netværket. Hver fil kontrolleres mod en SHA-256-hash, der er indbygget i appen. Din lyd forlader aldrig enheden.</string>
 </resources>

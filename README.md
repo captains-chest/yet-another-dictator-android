@@ -3,7 +3,7 @@
 Native Android companion to the [macOS Dictator app](https://github.com/captains-chest/yet-another-dictator)
 and the [iOS app](https://github.com/captains-chest/yet-another-dictator-ios).
 
-Fully offline dictation that works in any text field via a keyboard (an Android input method).
+On-device dictation that works in any text field via a keyboard (an Android input method).
 Uses a Kotlin port of the shared [DictationCore](https://github.com/captains-chest/DictationCore)
 logic and whisper.cpp.
 
@@ -12,7 +12,7 @@ logic and whisper.cpp.
 - **Simple and robust** — same philosophy as the macOS app: no fancy features, just reliable dictation.
 - **Platform native** — a keyboard with one big mic button, Material You colours, Danish and English UI.
 - **Hold** = push-to-talk, **tap** = toggle (same dual-mode as the macOS hotkey and the iOS keyboard).
-- **Smaller model** — Whisper Small (q5_1) via whisper.cpp. Offline, on-device.
+- **Smaller model** — Whisper Small (q5_1) via whisper.cpp, on-device. Downloaded once after install (190 MB, Wi-Fi recommended).
 - **Shared core** — pure logic lives in `core`, a tested Kotlin port of DictationCore (ADR 0005).
 
 ## Architecture
@@ -23,7 +23,7 @@ use the microphone and has the memory for a Whisper model, so there is no hand-o
 ```
 Keyboard (DictatorIme, an InputMethodService)
   └─ MicrophoneRecorder: AudioRecord → CaptureBuffer (16 kHz mono float)
-  └─ WhisperTranscriber → JNI → whisper.cpp (bundled Whisper Small q5_1, read from the APK)
+  └─ WhisperTranscriber → JNI → whisper.cpp (Whisper Small q5_1, downloaded once into app storage, ADR 0006)
   └─ DictationController
   └─ ImeTextInserter → InputConnection.commitText (chunked, cancellable), SmartJoin context
 App (MainActivity, Jetpack Compose)
@@ -42,14 +42,14 @@ Requires JDK 17+, the Android SDK (compileSdk 37) and NDK 28.2.13676358 with CMa
 Gradle downloads whisper.cpp 1.9.5 (pinned by SHA-256) the first time it builds the native code.
 
 ```sh
-scripts/fetch-model.sh          # once; verifies Whisper Small q5_1 into model_pack/src/main/assets/model (gitignored)
-./gradlew bundleRelease         # the AAB for Play: base (~5 MB) + install-time model asset pack
-scripts/build-universal-apk.sh  # one installable APK with the model, for sideload testing
+./gradlew bundleRelease         # the AAB for Play (~5 MB; no model inside)
+scripts/build-universal-apk.sh  # one installable APK, for sideloading
+scripts/fetch-model.sh && scripts/push-model.sh   # optional: put the verified model on a debug build via adb
 ```
 
-The model lives in the install-time asset pack `model_pack` (ADR 0004), so `assembleDebug` APKs
-don't contain it and say they can't transcribe; use `build-universal-apk.sh` to test dictation.
-The model is never downloaded by the app.
+No build contains the model (ADR 0006). After install, the app shows the model's size and downloads
+it only when you tap **Download** (Wi-Fi only unless you allow mobile data). Every file is checked
+against the SHA-256 manifest (`scripts/model-manifest.txt`) that ships inside the signed APK.
 
 Releases: push a `v*` tag with a matching CHANGELOG section. The Release workflow builds a signed
 AAB and universal APK, attaches them to a GitHub release, and uploads the AAB as a draft to Play's
@@ -61,7 +61,7 @@ https://captains-chest.com/dictator/privacy
 ```sh
 ./gradlew :core:test            # the ported DictationCore tests
 ./gradlew ktlintCheck lint      # Kotlin style and Android lint
-scripts/build-universal-apk.sh && ./gradlew -PtestBuildType=release assembleReleaseAndroidTest
+scripts/build-universal-apk.sh && ./gradlew -PtestBuildType=release assembleReleaseAndroidTest   # download the model in the app first
 adb install build/dictator-universal.apk && adb install app/build/outputs/apk/androidTest/release/app-release-androidTest.apk
 adb shell am instrument -w com.captainduckay.dictator.android.test/androidx.test.runner.AndroidJUnitRunner   # JFK sample, JNI + model
 ```
@@ -71,13 +71,14 @@ switch to it in the **Try it** field.
 
 ## Permissions
 
-Each one is required, and none of them grant network access.
+Each one is required.
 
 - **`RECORD_AUDIO`:** the keyboard records only while a dictation is running.
 - **`BIND_INPUT_METHOD`** (on the keyboard service): lets Android bind the keyboard. Android warns
-  that a keyboard can collect what you type; Dictator stores nothing and has no network access.
+  that a keyboard can collect what you type; Dictator stores nothing, and audio and text never leave the device.
 
-There is **no `INTERNET` permission**, so the app cannot reach the network at all. Backups are off.
+- **`INTERNET`, `ACCESS_NETWORK_STATE`:** only for the one-time model download that you start in
+  the app (ADR 0006). No audio, text or analytics are ever sent. Backups are off.
 
 ## Requirements
 
@@ -89,18 +90,19 @@ There is **no `INTERNET` permission**, so the app cannot reach the network at al
 
 These are requirements for every change:
 
-- **Offline dictation.** Audio and text never leave the device. The model is bundled and the app
-  has no network permission. Adding one needs an ADR.
+- **Audio never leaves the device; the one-time model download is the only network use.** The
+  download needs the user's consent, prefers Wi-Fi and is verified against the bundled manifest.
+  Any other network use needs an ADR.
 - **No clipboard.** Text goes in through `InputConnection.commitText`, never the clipboard.
 - **Least privilege.** Only the microphone, and only while dictating. Nothing typed or said is
   stored or logged.
 
 ## Status
 
-The keyboard, the app, the JNI bridge and the bundled model are in place, and CI builds and tests
+The keyboard, the app, the JNI bridge and the model download are in place, and CI builds and tests
 them. Not yet measured on a real phone: latency, peak memory, Danish/English quality, and how the
-keyboard behaves in apps with unusual text fields (ADR 0001, 0004). The model ships as a Play
-install-time asset pack (ADR 0004).
+keyboard behaves in apps with unusual text fields (ADR 0001, 0004), and the download
+on a real network (ADR 0006).
 
 ## Conventions
 

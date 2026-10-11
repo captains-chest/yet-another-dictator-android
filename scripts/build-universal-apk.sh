@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Builds one installable APK (base + the model asset pack) from the release AAB, for sideload
+# Builds one installable APK from the release AAB, for sideloading. The model is not in it: the app
+# downloads it after install with the user's consent (ADR 0006). For sideload
 # testing. Signs with the upload key when ANDROID_UPLOAD_KEYSTORE and its passwords are set
 # (as in CI), otherwise with the local debug key.
-#   scripts/fetch-model.sh && scripts/build-universal-apk.sh   →  build/dictator-universal.apk
+#   scripts/build-universal-apk.sh   →  build/dictator-universal.apk
 set -euo pipefail
 umask 077
 
@@ -18,7 +19,6 @@ if [[ ! -f "$jar" ]] || ! echo "$sha  $jar" | sha256sum -c --status; then
   echo "$sha  $jar" | sha256sum -c --status || { echo "bundletool SHA-256 mismatch" >&2; exit 1; }
 fi
 
-[[ -f model_pack/src/main/assets/model/ggml-small-q5_1.bin ]] || { echo "Run scripts/fetch-model.sh first." >&2; exit 1; }
 ./gradlew --quiet bundleRelease
 
 signing=()
