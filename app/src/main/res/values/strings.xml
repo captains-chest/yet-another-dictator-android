@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Dictator</string>
+    <string name="subtype_label">Dictation</string>
+
+    <string name="section_microphone">Microphone</string>
+    <string name="section_keyboard">Keyboard</string>
+    <string name="section_language">Language</string>
+    <string name="section_model">Model</string>
+    <string name="section_try">Try it</string>
+    <string name="section_about">About</string>
+
+    <string name="microphone_allowed">Microphone allowed</string>
+    <string name="microphone_footnote">Dictator listens only while you dictate, and transcribes on this phone. Audio is never saved.</string>
+    <string name="action_allow_microphone">Allow Microphone</string>
+    <string name="action_open_settings">Open Settings</string>
+
+    <string name="keyboard_steps">Turn on Dictator under Settings → System → Keyboard → On-screen keyboard, then switch to it in any text field.</string>
+    <string name="keyboard_enabled">The Dictator keyboard is on.</string>
+    <string name="action_enable_keyboard">Turn on keyboard</string>
+    <string name="action_switch_keyboard">Switch keyboard</string>
+    <string name="keyboard_footnote">Android shows a warning that a keyboard can collect what you type. Dictator has no network access and stores nothing you type or say.</string>
+
+    <string name="language_automatic">Automatic</string>
+
+    <string name="model_bundled">%1$s is bundled in the app and never downloads.</string>
+    <string name="model_missing">This build has no speech model, so it cannot transcribe. See the README.</string>
+
+    <string name="try_placeholder">Tap here, switch to the Dictator keyboard and dictate.</string>
+
+    <string name="about_version">Version %1$s</string>
+    <string name="about_privacy">Offline: Dictator has no internet permission. MIT licensed.</string>
+    <string name="action_notices">Licenses</string>
+    <string name="action_ok">OK</string>
+    <string name="whats_new_title">What\'s new</string>
+    <string name="whats_new_welcome">Welcome to Dictator</string>
+
+    <string name="keyboard_switch">Next keyboard</string>
+    <string name="keyboard_needs_microphone">Open Dictator and allow the microphone to dictate.</string>
+    <string name="action_open_dictator">Open Dictator</string>
+    <string name="status_loading">Loading the speech model…</string>
+    <string name="caption_ready">Tap to toggle · Hold to talk</string>
+    <string name="caption_recording">Release to finish, or tap again</string>
+    <string name="caption_transcribing">Transcribing…</string>
+    <string name="mic_label">Dictate</string>
+    <string name="mic_hint">start or stop dictation</string>
+    <string name="action_try_again">Try again</string>
+    <string name="action_discard">Discard</string>
+
+    <string name="error_no_field">Tap a text field first.</string>
+    <string name="error_field_gone">The text field went away before the text could be typed.</string>
+</resources>
