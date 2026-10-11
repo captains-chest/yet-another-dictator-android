@@ -109,5 +109,5 @@ dependencies, small PRs merged on green CI. These are the same conventions as th
 
 ## License
 
-MIT © 2026 Nicki Skipper Otte. See [LICENSE](LICENSE). Third-party components are credited in
+MIT © 2026 CaptainDuckay. See [LICENSE](LICENSE). Third-party components are credited in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

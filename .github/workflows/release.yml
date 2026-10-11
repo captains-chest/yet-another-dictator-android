@@ -1,7 +1,7 @@
 name: Release
 
 # On a v* tag: build a signed AAB (for Play) and a signed universal APK (for sideloading), attach
-# both to a GitHub release, and upload the AAB to Play's internal track once Nicki has added a
+# both to a GitHub release, and upload the AAB to Play's internal track once CaptainDuckay has added a
 # PLAY_SERVICE_ACCOUNT_JSON secret (skipped until then).
 on:
   push:
