@@ -26,9 +26,6 @@ android {
         }
     }
 
-    // The model ships as an install-time asset pack (ADR 0004), keeping the base under Play's limit.
-    assetPacks += listOf(":model_pack")
-
     // Release signing comes from the environment (CI secrets); without it the release is unsigned.
     val keystore = System.getenv("ANDROID_UPLOAD_KEYSTORE")
     signingConfigs {
@@ -59,11 +56,6 @@ android {
         }
     }
 
-    androidResources {
-        // The model is read straight out of the APK, which requires it to be stored uncompressed.
-        noCompress += "bin"
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -90,10 +82,16 @@ val bundleDocs by tasks.registering(Sync::class) {
     into(layout.buildDirectory.dir("generated/docs/assets/docs"))
 }
 
+// The pinned model manifest ships inside the signed APK: the trust anchor for the download (ADR 0006).
+val bundleModelManifest by tasks.registering(Sync::class) {
+    from(rootProject.file("scripts/model-manifest.txt"))
+    into(layout.buildDirectory.dir("generated/manifest/assets/model"))
+}
+
 android.sourceSets
     .getByName("main")
-    .assets.directories += "build/generated/docs/assets"
-tasks.named("preBuild") { dependsOn(bundleDocs) }
+    .assets.directories += listOf("build/generated/docs/assets", "build/generated/manifest/assets")
+tasks.named("preBuild") { dependsOn(bundleDocs, bundleModelManifest) }
 
 dependencies {
     implementation(project(":core"))
@@ -105,6 +103,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.savedstate)
+    implementation(libs.androidx.work.runtime)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)

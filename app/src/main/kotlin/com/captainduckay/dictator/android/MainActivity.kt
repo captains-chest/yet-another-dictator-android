@@ -27,7 +27,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -37,12 +39,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -51,10 +55,12 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.work.WorkInfo
 import com.captainduckay.dictator.core.AppVersion
 import com.captainduckay.dictator.core.Changelog
 import com.captainduckay.dictator.core.DictationLanguage
 import com.captainduckay.dictator.core.WhatsNew
+import java.util.Locale
 
 /**
  * The container app: setup only. Same sections as the iOS app (microphone, language, keyboard,
@@ -101,7 +107,6 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
     var language by remember { mutableStateOf(settings.language) }
     var whatsNew by remember { mutableStateOf(initialWhatsNew) }
     var showNotices by remember { mutableStateOf(false) }
-    val modelBundled = remember { SpeechModel.isBundled(activity) }
     var askedOnce by remember { mutableStateOf(false) }
     val permission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -179,13 +184,7 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
                     }
                 }
             }
-            Section(stringResource(R.string.section_model)) {
-                if (modelBundled) {
-                    Text(stringResource(R.string.model_bundled, SpeechModel.DISPLAY_NAME))
-                } else {
-                    Text(stringResource(R.string.model_missing), color = MaterialTheme.colorScheme.error)
-                }
-            }
+            Section(stringResource(R.string.section_model)) { ModelSection() }
             Section(stringResource(R.string.section_try)) {
                 var text by remember { mutableStateOf("") }
                 OutlinedTextField(
@@ -229,6 +228,58 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
             onDismiss = { showNotices = false },
         )
     }
+}
+
+/**
+ * Explicit opt-in download (ADR 0006): shows the size, recommends Wi-Fi, and only uses mobile data
+ * when the user ticks the box. Nothing downloads until they tap the button.
+ */
+@Composable
+private fun ModelSection() {
+    val context = LocalContext.current
+    val sizeMb = remember { String.format(Locale.ROOT, "%.0f", SpeechModel.downloadBytes(context) / 1_000_000.0) }
+    val work by remember { ModelDownloadWorker.observe(context) }.collectAsState(initial = emptyList())
+    val info = work.firstOrNull()
+    var allowMobileData by remember { mutableStateOf(false) }
+    val installed = SpeechModel.isInstalled(context) || info?.state == WorkInfo.State.SUCCEEDED
+
+    when {
+        installed -> Text(stringResource(R.string.model_installed, SpeechModel.DISPLAY_NAME))
+        info != null && !info.state.isFinished -> {
+            val done = info.progress.getLong(ModelDownloadWorker.KEY_DONE, 0)
+            val total = info.progress.getLong(ModelDownloadWorker.KEY_TOTAL, 0)
+            if (info.state == WorkInfo.State.RUNNING && total > 0) {
+                LinearProgressIndicator(progress = { done.toFloat() / total }, modifier = Modifier.fillMaxWidth())
+                Text(stringResource(R.string.model_progress, done / 1_000_000, total / 1_000_000))
+            } else {
+                Text(stringResource(R.string.model_waiting))
+            }
+            OutlinedButton(
+                onClick = { ModelDownloadWorker.cancel(context) },
+            ) { Text(stringResource(R.string.action_cancel)) }
+        }
+        else -> {
+            Text(stringResource(R.string.model_offer, SpeechModel.DISPLAY_NAME, sizeMb))
+            if (info?.state == WorkInfo.State.FAILED) {
+                Text(stringResource(R.string.model_failed), color = MaterialTheme.colorScheme.error)
+            }
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .selectable(selected = allowMobileData, role = Role.Checkbox, onClick = {
+                        allowMobileData = !allowMobileData
+                    }),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(checked = allowMobileData, onCheckedChange = null)
+                Text(stringResource(R.string.model_allow_mobile), Modifier.padding(start = 12.dp))
+            }
+            Button(onClick = { ModelDownloadWorker.start(context, allowMobileData) }) {
+                Text(stringResource(R.string.action_download_model, sizeMb))
+            }
+        }
+    }
+    Footnote(stringResource(R.string.model_footnote))
 }
 
 @Composable

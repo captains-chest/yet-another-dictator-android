@@ -72,25 +72,15 @@ jobs:
       - name: Android SDK packages
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "ndk;$NDK_VERSION" "cmake;$CMAKE_VERSION" > /dev/null
 
-      # Keyed by the manifest, so a model bump fetches again. fetch-model.sh re-verifies every hash.
-      - name: Cache model
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: model_pack/src/main/assets/model
-          key: model-${{ hashFiles('scripts/model-manifest.txt') }}
-
-      - name: Fetch and verify model
-        run: scripts/fetch-model.sh
-
       # Unsigned here (no secrets on pull requests); signed builds come from the Release workflow.
-      # The base must stay under Play's 200 MB limit; the model lives in the asset pack.
+      # The model is downloaded after install (ADR 0006), so the whole AAB stays small.
       - name: Release AAB
         run: |
           ./gradlew bundleRelease
           aab=app/build/outputs/bundle/release/app-release.aab
           base=$(unzip -l "$aab" | awk '$4 ~ /^base\// {s += $1} END {print s}')
           echo "base module: $base bytes"
-          test "$base" -lt 150000000
+          test "$base" -lt 50000000
 
       - name: Upload unsigned release AAB
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

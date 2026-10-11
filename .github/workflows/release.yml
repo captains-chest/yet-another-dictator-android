@@ -45,15 +45,6 @@ jobs:
           echo "VERSION_CODE=$((100 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
           grep -q "^## \[$version\]" CHANGELOG.md || { echo "CHANGELOG.md has no section for $version" >&2; exit 1; }
 
-      - name: Cache model
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: model_pack/src/main/assets/model
-          key: model-${{ hashFiles('scripts/model-manifest.txt') }}
-
-      - name: Fetch and verify model
-        run: scripts/fetch-model.sh
-
       - name: Upload key
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}

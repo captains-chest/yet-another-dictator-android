@@ -1,4 +1,6 @@
-# Bundled model: whisper.cpp ggml-small-q5_1.bin (Whisper Small, multilingual, 5-bit quantised).
-# Pinned to an immutable Hugging Face commit and verified by SHA-256 (ADR 0004).
-# Format: <sha256>  <huggingface-path>  <path under model_pack/src/main/assets/model/>
-ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb  ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-small-q5_1.bin  ggml-small-q5_1.bin
+# Whisper models the app downloads after install (never bundled). This file ships inside the signed
+# app and is the only trust anchor: every file is pinned to an immutable Hugging Face commit and
+# verified by SHA-256 before use. The manifest itself is never fetched from the network.
+# Format: <model-id>  <sha256>  <bytes>  <huggingface-path>  <local-path-under-the-model-folder>
+# More models (e.g. a Dansk-only one) are added as extra lines with their own model-id.
+ggml-small-q5_1  ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb  190085487  ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-small-q5_1.bin  ggml-small-q5_1.bin

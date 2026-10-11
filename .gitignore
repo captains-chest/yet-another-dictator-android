@@ -7,5 +7,5 @@ local.properties
 .cxx/
 .DS_Store
 captures/
-# Model files are fetched by scripts/fetch-model.sh and never committed (ADR 0004).
-/model_pack/src/main/assets/model/
+# Model files fetched by scripts/fetch-model.sh for local testing; never committed or bundled (ADR 0006).
+/build/model/

@@ -1,5 +1,5 @@
 // JNI bridge to whisper.cpp. Kept deliberately small: load a model from an open file descriptor
-// (an uncompressed APK asset), transcribe one clip, abort, free. No network, no files written.
+// (the downloaded model file, ADR 0006), transcribe one clip, abort, free. No network, no files written.
 
 #include <jni.h>
 #include <android/log.h>

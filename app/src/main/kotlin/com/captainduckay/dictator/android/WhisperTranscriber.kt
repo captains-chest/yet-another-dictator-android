@@ -1,6 +1,7 @@
 package com.captainduckay.dictator.android
 
 import android.content.Context
+import android.os.ParcelFileDescriptor
 import com.captainduckay.dictator.core.DictationPrompt
 import com.captainduckay.dictator.core.Transcribing
 import kotlinx.coroutines.Dispatchers
@@ -15,10 +16,10 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 
-/** On-device transcription with whisper.cpp (ADR 0002). Fully offline. */
+/** On-device transcription with whisper.cpp (ADR 0002). Audio never leaves the device. */
 class WhisperTranscriber(private val context: Context) : Transcribing {
     class ModelMissing : Exception(
-        "This build has no speech model. Build it with scripts/fetch-model.sh (see the README).",
+        "The speech model isn't downloaded yet. Open Dictator to download it.",
     )
 
     class LoadFailed : Exception("The speech model could not be loaded.")
@@ -34,14 +35,16 @@ class WhisperTranscriber(private val context: Context) : Transcribing {
         mutex.withLock {
             if (handle != 0L) return@withLock
             withContext(dispatcher) {
+                if (!SpeechModel.isInstalled(context)) throw ModelMissing()
+                val file = SpeechModel.file(context)
                 val descriptor =
                     try {
-                        context.assets.openFd(SpeechModel.ASSET_PATH)
+                        ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
                     } catch (_: FileNotFoundException) {
                         throw ModelMissing()
                     }
                 descriptor.use {
-                    handle = WhisperNative.load(it.parcelFileDescriptor.fd, it.startOffset, it.length)
+                    handle = WhisperNative.load(it.fd, 0L, file.length())
                 }
                 if (handle == 0L) throw LoadFailed()
             }

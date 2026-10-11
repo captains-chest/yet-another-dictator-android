@@ -11,9 +11,9 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 /**
- * End-to-end check of the JNI bridge and the bundled model on a device or emulator: transcribes
+ * End-to-end check of the JNI bridge and the downloaded model on a device or emulator: transcribes
  * whisper.cpp's JFK sample (16 kHz mono PCM16, MIT, from the whisper.cpp repository). Skipped when
- * the build has no model (run scripts/fetch-model.sh first).
+ * the model isn't downloaded yet (download it in the app, or push it with scripts/push-model.sh).
  */
 @RunWith(AndroidJUnit4::class)
 class WhisperTranscriberTest {
@@ -33,7 +33,7 @@ class WhisperTranscriberTest {
 
     @Test fun transcribesEnglishOffline() =
         runBlocking {
-            assumeTrue("no model bundled", SpeechModel.isBundled(app))
+            assumeTrue("model not downloaded", SpeechModel.isInstalled(app))
             val transcriber = WhisperTranscriber(app)
             transcriber.prepare()
             val text = transcriber.transcribe(jfk(), "en")

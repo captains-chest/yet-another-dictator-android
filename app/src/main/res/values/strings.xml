@@ -19,17 +19,14 @@
     <string name="keyboard_enabled">The Dictator keyboard is on.</string>
     <string name="action_enable_keyboard">Turn on keyboard</string>
     <string name="action_switch_keyboard">Switch keyboard</string>
-    <string name="keyboard_footnote">Android shows a warning that a keyboard can collect what you type. Dictator has no network access and stores nothing you type or say.</string>
+    <string name="keyboard_footnote">Android shows a warning that a keyboard can collect what you type. Your audio and text never leave the device, and Dictator stores nothing you type or say.</string>
 
     <string name="language_automatic">Automatic</string>
-
-    <string name="model_bundled">%1$s is bundled in the app and never downloads.</string>
-    <string name="model_missing">This build has no speech model, so it cannot transcribe. See the README.</string>
 
     <string name="try_placeholder">Tap here, switch to the Dictator keyboard and dictate.</string>
 
     <string name="about_version">Version %1$s</string>
-    <string name="about_privacy">Offline: Dictator has no internet permission. MIT licensed.</string>
+    <string name="about_privacy">Audio never leaves the device; the one-time model download is the only network use. MIT licensed.</string>
     <string name="action_notices">Licenses</string>
     <string name="action_ok">OK</string>
     <string name="whats_new_title">What\'s new</string>
@@ -49,4 +46,13 @@
 
     <string name="error_no_field">Tap a text field first.</string>
     <string name="error_field_gone">The text field went away before the text could be typed.</string>
+    <string name="model_installed">%1$s is downloaded and ready. Dictation works offline.</string>
+    <string name="model_offer">Dictator needs the %1$s speech model (%2$s MB), downloaded once. Wi-Fi is recommended.</string>
+    <string name="model_allow_mobile">Also download over mobile data</string>
+    <string name="action_download_model">Download model (%1$s MB)</string>
+    <string name="model_progress">Downloading… %1$d of %2$d MB</string>
+    <string name="model_waiting">Waiting for Wi-Fi (or a connection) to download the model…</string>
+    <string name="model_failed">The download failed. Try again.</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="model_footnote">The one-time model download from Hugging Face is the only network use. Every file is checked against a SHA-256 hash built into the app. Your audio never leaves the device.</string>
 </resources>

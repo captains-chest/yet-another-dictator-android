@@ -2,11 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- The only permission. Used by the keyboard only while a dictation is running. -->
+    <!-- Used by the keyboard only while a dictation is running. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-feature android:name="android.hardware.microphone" android:required="true" />
 
-    <!-- No INTERNET permission: the app cannot reach the network (README, Privacy rules). -->
+    <!-- Only for the one-time, user-started model download (ADR 0006). Audio never leaves the device. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="false"
