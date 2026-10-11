@@ -53,14 +53,11 @@ class ImeTextInserter(private val service: InputMethodService) : TextInserting {
         connection.deleteSurroundingText(length, 0)
     }
 
-    fun textBeforeCursor(): String? = service.currentInputConnection?.getTextBeforeCursor(CONTEXT_LENGTH, 0)?.toString()
-
     fun resetExpectation() {
         expectedCursor = -1
     }
 
     private companion object {
-        const val CONTEXT_LENGTH = 200
         const val MAX_UTF16_PER_GRAPHEME = 16
     }
 }

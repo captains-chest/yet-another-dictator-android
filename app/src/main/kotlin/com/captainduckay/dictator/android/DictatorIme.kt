@@ -57,8 +57,7 @@ class DictatorIme :
                 onFailure = { controller.recordingFailed(it) },
                 onLimit = { controller.recordingReachedLimit() },
             )
-        controller = DictationController(scope, recorder, transcriber, inserter)
-        controller.textBeforeCursor = { inserter.textBeforeCursor() }
+        controller = DictationController(scope, recorder, transcriber, inserter, ImePrecedingTextReader(this))
         scope.launch { controller.loadModel() }
     }
 

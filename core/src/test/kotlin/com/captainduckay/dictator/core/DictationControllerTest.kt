@@ -110,6 +110,17 @@ class FakeInserter : TextInserting {
     }
 }
 
+/** Returns [text] as the field's text before the cursor; null means it can't be read. */
+class FakePrecedingTextReader : PrecedingTextReading {
+    var text: String? = null
+    val requestedLengths = mutableListOf<Int>()
+
+    override fun textBeforeCursor(maxLength: Int): String? {
+        requestedLengths += maxLength
+        return text
+    }
+}
+
 class Boom : Exception("Boom.")
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -117,6 +128,7 @@ class DictationControllerTest {
     private val recorder = FakeRecorder()
     private val transcriber = FakeTranscriber()
     private val inserter = FakeInserter()
+    private val precedingText = FakePrecedingTextReader()
     private var clock = 100.0
 
     private suspend fun TestScope.makeController(
@@ -129,6 +141,7 @@ class DictationControllerTest {
                 recorder = recorder,
                 transcriber = transcriber,
                 inserter = inserter,
+                precedingText = precedingText,
                 now = { clock },
                 stopTail = stopTail,
                 transcriptionTimeout = { timeout },
@@ -346,7 +359,7 @@ class DictationControllerTest {
         runTest {
             val controller = makeController()
             dictate(controller, "Hello world.")
-            controller.textBeforeCursor = { "Dear Sir," }
+            precedingText.text = "Dear Sir,"
             dictate(controller, "Thanks for writing.")
             assertEquals(" thanks for writing.", inserter.inserted.last())
         }
@@ -354,10 +367,28 @@ class DictationControllerTest {
     @Test fun emptyFieldReadingDoesNotOverrideHistory() =
         runTest {
             val controller = makeController()
-            controller.textBeforeCursor = { "" }
+            precedingText.text = ""
             dictate(controller, "hello world.")
             dictate(controller, "and more.")
             assertEquals(listOf("Hello world.", " And more."), inserter.inserted)
+        }
+
+    @Test fun unreadableFieldFallsBackToHistory() =
+        runTest {
+            val controller = makeController()
+            precedingText.text = null
+            dictate(controller, "Hello world.")
+            dictate(controller, "and more")
+            assertEquals(listOf("Hello world.", " And more"), inserter.inserted)
+            assertEquals(listOf(64, 64), precedingText.requestedLengths)
+        }
+
+    @Test fun unreadableFieldWithoutHistoryTypesAsTranscribed() =
+        runTest {
+            val controller = makeController()
+            precedingText.text = null
+            dictate(controller, "hello world")
+            assertEquals(listOf("hello world"), inserter.inserted)
         }
 
     @Test fun reportsTimingFromReleaseToTypedText() =

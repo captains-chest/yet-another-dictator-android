@@ -42,6 +42,19 @@ interface TextInserting {
     suspend fun deleteBackward(count: Int)
 }
 
+/**
+ * Reads the text just before the insertion point, so a dictation can be spaced and capitalized to
+ * fit. Best effort; the text is never stored or logged. Mirrors DictationCore's
+ * `PrecedingTextReading`.
+ */
+interface PrecedingTextReading {
+    /**
+     * Text before the insertion point (up to [maxLength]), or null when unavailable.
+     * Empty string means cursor at start / empty field.
+     */
+    fun textBeforeCursor(maxLength: Int): String?
+}
+
 /** How long one dictation took, for latency logging. Contains no text or audio. */
 data class DictationTiming(
     val audioSeconds: Double,
@@ -72,6 +85,7 @@ class DictationController(
     private val recorder: AudioRecording,
     private val transcriber: Transcribing,
     private val inserter: TextInserting,
+    private val precedingText: PrecedingTextReading,
     private val now: () -> Double = { System.nanoTime() / 1e9 },
     private val holdThreshold: Double = 0.35,
     minimumDuration: Double = 0.3,
@@ -100,8 +114,6 @@ class DictationController(
     /** Language for the next transcriptions. */
     var language: DictationLanguage = DictationLanguage.AUTOMATIC
 
-    /** Reads the text just before the cursor, or returns null. Never stored or logged. */
-    var textBeforeCursor: (() -> String?)? = null
     var onTiming: ((DictationTiming) -> Unit)? = null
 
     private val minimumSamples = (minimumDuration * SAMPLE_RATE).toInt()
@@ -327,7 +339,7 @@ class DictationController(
         }
         // The field's own text when it can be read; otherwise our previous dictation; otherwise
         // unknown. An empty reading right after our own dictation is distrusted.
-        val fieldText = textBeforeCursor?.invoke()
+        val fieldText = precedingText.textBeforeCursor(PRECEDING_TEXT_LENGTH)
         val preceding = if (!fieldText.isNullOrEmpty()) fieldText else (history.lastInserted ?: fieldText)
         val typed = SmartJoin.adjust(text, preceding)
         // Typing stays in Transcribing, so cancel() can still stop it between chunks.
@@ -370,6 +382,9 @@ class DictationController(
 
     companion object {
         const val SAMPLE_RATE = 16_000.0
+
+        /** How much text before the cursor is read for spacing and capitalization. */
+        const val PRECEDING_TEXT_LENGTH = 64
 
         /** 30 s plus the audio's length: far beyond normal, but bounded. */
         fun defaultTranscriptionTimeout(sampleCount: Int): Duration = 30.seconds + (sampleCount / SAMPLE_RATE).seconds
