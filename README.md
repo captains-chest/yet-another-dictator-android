@@ -42,12 +42,21 @@ Requires JDK 17+, the Android SDK (compileSdk 37) and NDK 28.2.13676358 with CMa
 Gradle downloads whisper.cpp 1.9.5 (pinned by SHA-256) the first time it builds the native code.
 
 ```sh
-scripts/fetch-model.sh          # once; verifies Whisper Small q5_1 into app/src/main/assets/model (gitignored)
-./gradlew assembleDebug         # app/build/outputs/apk/debug/app-debug.apk
+scripts/fetch-model.sh          # once; verifies Whisper Small q5_1 into model_pack/src/main/assets/model (gitignored)
+./gradlew bundleRelease         # the AAB for Play: base (~5 MB) + install-time model asset pack
+scripts/build-universal-apk.sh  # one installable APK with the model, for sideload testing
 ```
 
-Without `fetch-model.sh` the app still builds and says it can't transcribe. The model is never
-downloaded by the app.
+The model lives in the install-time asset pack `model_pack` (ADR 0004), so `assembleDebug` APKs
+don't contain it and say they can't transcribe; use `build-universal-apk.sh` to test dictation.
+The model is never downloaded by the app.
+
+Releases: push a `v*` tag with a matching CHANGELOG section. The Release workflow builds a signed
+AAB and universal APK, attaches them to a GitHub release, and uploads the AAB as a draft to Play's
+internal track once the `PLAY_SERVICE_ACCOUNT_JSON` secret exists. The upload key lives only in
+repository secrets (and an offline backup); Google holds the app signing key (Play App Signing).
+Store listing, Data safety and content rating answers: `docs/play-store.md`. Privacy policy:
+https://captains-chest.com/dictator/privacy
 
 ```sh
 ./gradlew :core:test            # the ported DictationCore tests
@@ -88,8 +97,8 @@ These are requirements for every change:
 
 The keyboard, the app, the JNI bridge and the bundled model are in place, and CI builds and tests
 them. Not yet measured on a real phone: latency, peak memory, Danish/English quality, and how the
-keyboard behaves in apps with unusual text fields (ADR 0001, 0004). Publishing on Google Play needs
-the model in a Play asset pack (ADR 0004).
+keyboard behaves in apps with unusual text fields (ADR 0001, 0004). The model ships as a Play
+install-time asset pack (ADR 0004).
 
 ## Conventions
 

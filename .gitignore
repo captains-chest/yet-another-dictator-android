@@ -8,4 +8,4 @@ local.properties
 .DS_Store
 captures/
 # Model files are fetched by scripts/fetch-model.sh and never committed (ADR 0004).
-/app/src/main/assets/model/
+/model_pack/src/main/assets/model/

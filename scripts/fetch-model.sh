@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Downloads the pinned speech model into app/src/main/assets/model/ (gitignored) and verifies every
+# Downloads the pinned speech model into model_pack/src/main/assets/model/ (gitignored) and verifies every
 # file against scripts/model-manifest.txt. Run once before building an APK that can transcribe.
 # This is a build step on your computer; the app itself never downloads anything.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 manifest="$root/scripts/model-manifest.txt"
-target="$root/app/src/main/assets/model"
+target="$root/model_pack/src/main/assets/model"
 mkdir -p "$target"
 
 sha256() {

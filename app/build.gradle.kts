@@ -12,12 +12,29 @@ android {
         applicationId = "com.captainduckay.dictator.android"
         minSdk = 31 // ADR 0003
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        // CI passes the tag's version and a run-based code; local builds use these defaults.
+        versionCode = (System.getenv("VERSION_CODE") ?: "1").toInt()
+        versionName = System.getenv("VERSION_NAME") ?: "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             // arm64 for phones, x86_64 for the emulator (ADR 0002).
             abiFilters += listOf("arm64-v8a", "x86_64")
+        }
+    }
+
+    // The model ships as an install-time asset pack (ADR 0004), keeping the base under Play's limit.
+    assetPacks += listOf(":model_pack")
+
+    // Release signing comes from the environment (CI secrets); without it the release is unsigned.
+    val keystore = System.getenv("ANDROID_UPLOAD_KEYSTORE")
+    signingConfigs {
+        if (keystore != null) {
+            create("upload") {
+                storeFile = file(keystore)
+                storePassword = System.getenv("ANDROID_UPLOAD_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_UPLOAD_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_UPLOAD_KEY_PASSWORD")
+            }
         }
     }
 
@@ -33,8 +50,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Unsigned on purpose: no signing keys live in this repository or in CI.
-            signingConfig = null
+            signingConfig = signingConfigs.findByName("upload")
         }
     }
 
