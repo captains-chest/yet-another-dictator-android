@@ -1,6 +1,6 @@
 # Yet Another Dictator — Android
 
-Native Android companion to the [macOS Dictator app](https://github.com/captainDuckay/yet-another-dictator)
+Native Android companion to the [macOS Dictator app](https://github.com/captains-chest/yet-another-dictator)
 and the [iOS app](https://github.com/captains-chest/yet-another-dictator-ios).
 
 Fully offline dictation that works in any text field via a keyboard (an Android input method).
