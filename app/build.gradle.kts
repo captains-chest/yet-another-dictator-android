@@ -8,6 +8,10 @@ android {
     compileSdk = 37
     ndkVersion = "28.2.13676358"
 
+    // `-PtestBuildType=release` builds the device test against the signed release build, so the
+    // JFK test can run on a phone that has the release APK installed.
+    testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
+
     defaultConfig {
         applicationId = "com.captainduckay.dictator.android"
         minSdk = 31 // ADR 0003
@@ -50,6 +54,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            testProguardFiles("proguard-test-rules.pro")
             signingConfig = signingConfigs.findByName("upload")
         }
     }

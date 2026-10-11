@@ -61,7 +61,9 @@ https://captains-chest.com/dictator/privacy
 ```sh
 ./gradlew :core:test            # the ported DictationCore tests
 ./gradlew ktlintCheck lint      # Kotlin style and Android lint
-./gradlew connectedDebugAndroidTest   # on a device/emulator: JNI + model transcribe a sample
+scripts/build-universal-apk.sh && ./gradlew -PtestBuildType=release assembleReleaseAndroidTest
+adb install build/dictator-universal.apk && adb install app/build/outputs/apk/androidTest/release/app-release-androidTest.apk
+adb shell am instrument -w com.captainduckay.dictator.android.test/androidx.test.runner.AndroidJUnitRunner   # JFK sample, JNI + model
 ```
 
 Then: install, open Dictator, allow the microphone, tap **Turn on keyboard**, enable Dictator, and

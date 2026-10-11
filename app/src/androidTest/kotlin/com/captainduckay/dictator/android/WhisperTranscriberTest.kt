@@ -22,14 +22,12 @@ class WhisperTranscriberTest {
 
     private fun jfk(): FloatArray {
         val bytes = tests.assets.open("jfk.wav").use { it.readBytes() }
-        val pcm =
-            ByteBuffer
-                .wrap(
-                    bytes,
-                    WAV_HEADER,
-                    bytes.size - WAV_HEADER,
-                ).order(ByteOrder.LITTLE_ENDIAN)
-                .asShortBuffer()
+        // Walk the RIFF chunks to "data"; the sample also carries a LIST chunk.
+        val header = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        var offset = RIFF_HEADER
+        while (String(bytes, offset, 4, Charsets.US_ASCII) != "data") offset += CHUNK_HEADER + header.getInt(offset + 4)
+        val size = header.getInt(offset + 4)
+        val pcm = ByteBuffer.wrap(bytes, offset + CHUNK_HEADER, size).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
         return FloatArray(pcm.remaining()) { pcm.get(it) / 32768f }
     }
 

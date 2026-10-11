@@ -45,7 +45,7 @@ jobs:
         run: ./gradlew lint
 
       - name: Debug APK (no model)
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug assembleDebugAndroidTest
 
       - name: Upload lint reports
         if: failure()
