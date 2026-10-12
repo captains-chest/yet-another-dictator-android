@@ -5,6 +5,8 @@
 #include <android/log.h>
 #include <unistd.h>
 
+#include <sched.h>
+
 #include <atomic>
 #include <cstdio>
 #include <string>
@@ -50,6 +52,76 @@ void quiet_log(ggml_log_level level, const char *text, void *) {
     if (level >= GGML_LOG_LEVEL_WARN) __android_log_print(ANDROID_LOG_WARN, TAG, "%s", text);
 }
 
+// Little cores make Whisper slower if a worker lands on one. Prefer the fast cluster, and keep the
+// thread count to that cluster. Capacities are Android's own cpu_capacity files; a machine without
+// them (or where every core is equal) just uses the fallback.
+struct FastCores {
+    cpu_set_t set{};
+    int chosen = 0;
+    bool pin = false;
+};
+
+FastCores detect_fast_cores() {
+    FastCores picked;
+    CPU_ZERO(&picked.set);
+    int capacities[256];
+    int count = 0;
+    int best = 0;
+    for (; count < 256; ++count) {
+        char path[96];
+        std::snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpu_capacity", count);
+        FILE *file = std::fopen(path, "r");
+        if (file == nullptr) break;
+        int capacity = 0;
+        if (std::fscanf(file, "%d", &capacity) != 1) capacity = 0;
+        std::fclose(file);
+        capacities[count] = capacity;
+        if (capacity > best) best = capacity;
+    }
+    if (count == 0 || best <= 0) return picked;
+    // Half of the fastest core still includes the big cluster and leaves the little cores out.
+    const int threshold = best / 2;
+    for (int cpu = 0; cpu < count; ++cpu) {
+        if (capacities[cpu] >= threshold) {
+            CPU_SET(cpu, &picked.set);
+            picked.chosen += 1;
+        }
+    }
+    picked.pin = picked.chosen > 0;
+    return picked;
+}
+
+const FastCores &fast_cores() {
+    static const FastCores cached = detect_fast_cores();
+    return cached;
+}
+
+void pin_calling_thread() {
+    const FastCores &cores = fast_cores();
+    if (cores.pin) sched_setaffinity(0, sizeof(cores.set), &cores.set);
+}
+
+int fast_thread_count(int fallback) {
+    const FastCores &cores = fast_cores();
+    if (!cores.pin) return fallback < 2 ? 2 : fallback;
+    int threads = cores.chosen > 6 ? 6 : cores.chosen;
+    if (threads < 2) threads = 2;
+    return threads;
+}
+
+// Encoder frames are 20 ms (the mel hop is 10 ms, then the stride halves it). audio_ctx is that
+// count. The default context is the full 30 s even when the clip is a sentence, which is most of
+// the wait. A few extra frames keep the last syllable inside the window.
+int encoder_frames_for(int sample_count) {
+    constexpr int kSamplesPerFrame = 320;
+    constexpr int kFullWindowFrames = 1500;
+    constexpr int kTailFrames = 8;
+    constexpr int kMinimumFrames = 16;
+    int frames = (sample_count + kSamplesPerFrame - 1) / kSamplesPerFrame + kTailFrames;
+    if (frames < kMinimumFrames) frames = kMinimumFrames;
+    return frames >= kFullWindowFrames ? 0 : frames;
+}
+
 }  // namespace
 
 extern "C" JNIEXPORT jlong JNICALL
@@ -75,6 +147,9 @@ Java_com_captainduckay_dictator_android_WhisperNative_load(JNIEnv *, jobject, ji
 
     whisper_context_params params = whisper_context_default_params();
     params.use_gpu = false;
+    // Flash attention is the default and stays on for the CPU build; it is the faster attention path.
+    params.flash_attn = true;
+    pin_calling_thread();
     whisper_context *context = whisper_init_with_params(&loader, params);
     fclose(file);
     if (context == nullptr) return 0;
@@ -93,15 +168,21 @@ Java_com_captainduckay_dictator_android_WhisperNative_transcribe(
     const char *language_chars = language != nullptr ? env->GetStringUTFChars(language, nullptr) : nullptr;
     const char *prompt_chars = env->GetStringUTFChars(prompt, nullptr);
 
+    pin_calling_thread();
     whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
-    params.n_threads = threads;
+    params.n_threads = fast_thread_count(threads);
     params.translate = false;
     params.no_timestamps = true;
+    params.single_segment = true;
     params.print_progress = false;
     params.print_realtime = false;
     params.print_special = false;
     params.print_timestamps = false;
     params.suppress_blank = true;
+    // Temperature 0 already uses one decoder. best_of only applies to the hotter retries, and 5 of
+    // those is what makes a difficult clip take several times longer.
+    params.greedy.best_of = 1;
+    params.audio_ctx = encoder_frames_for(env->GetArrayLength(samples));
     params.language = language_chars != nullptr ? language_chars : "auto";
     params.detect_language = false;
     params.initial_prompt = prompt_chars;

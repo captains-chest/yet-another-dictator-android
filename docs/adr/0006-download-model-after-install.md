@@ -34,7 +34,7 @@ and iOS apps are moving to the same approach.
 - Privacy wording changes everywhere to: "Audio never leaves the device; the one-time model download
   is the only network use." The Play listing and Data safety answers are updated (no user data is
   transmitted, so "No data collected" still holds).
-- Dictation does not work until the model is downloaded; the keyboard says so and points to the app.
+- Dictation does not work until the model is downloaded; the button says so and points to the app.
 - The APK is about 190 MB smaller; updates no longer re-deliver the model.
 - Long downloads may be stopped by WorkManager's execution limit; resume and retry continue them.
 - On-device tests either download in the app or use `scripts/fetch-model.sh` + `scripts/push-model.sh`.

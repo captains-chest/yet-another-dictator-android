@@ -34,3 +34,11 @@ phone, including Cortex-A53 budget devices.
 - Baseline ARMv8 code leaves speed on the table on newer phones. Follow-up, once measured on a real
   device: build an extra armv8.2-a+dotprod+fp16 variant and choose at runtime from the CPU features.
 - Debug builds compile whisper.cpp with `-O3` too; unoptimised it is unusably slow.
+
+## Update (2026-10-11)
+
+On a phone, Small was accurate and slow. `whisper_full` was encoding the full 30-second context
+even for a short clip, and a difficult clip retried with five decoders. Decoding now sets
+`audio_ctx` to the clip (plus a short tail), uses one greedy decoder, asks the scheduler for the
+fast cores, and pins the worker to that cluster. The model is unchanged. A per-CPU dotprod build
+is still open if this is not enough.

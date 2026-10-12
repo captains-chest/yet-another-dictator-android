@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Dictator</string>
-    <string name="subtype_label">Dictation</string>
 
     <string name="section_microphone">Microphone</string>
-    <string name="section_keyboard">Keyboard</string>
+    <string name="section_button">Button</string>
     <string name="section_language">Language</string>
     <string name="section_model">Model</string>
     <string name="section_try">Try it</string>
@@ -15,15 +14,19 @@
     <string name="action_allow_microphone">Allow Microphone</string>
     <string name="action_open_settings">Open Settings</string>
 
-    <string name="keyboard_steps">Turn on Dictator under Settings → System → Keyboard → On-screen keyboard, then switch to it in any text field.</string>
-    <string name="keyboard_enabled">The Dictator keyboard is on.</string>
-    <string name="action_enable_keyboard">Turn on keyboard</string>
-    <string name="action_switch_keyboard">Switch keyboard</string>
-    <string name="keyboard_footnote">Android shows a warning that a keyboard can collect what you type. Your audio and text never leave the device, and Dictator stores nothing you type or say.</string>
+    <string name="overlay_needed">Allow Dictator to draw a floating microphone over other apps. Your keyboard stays as it is.</string>
+    <string name="action_allow_overlay">Allow the button</string>
+    <string name="typing_needed">Turn on Dictator under Accessibility. It types into the field you are in, and reads only that field so the words land at the cursor. Nothing is stored.</string>
+    <string name="action_allow_typing">Turn on typing</string>
+    <string name="button_ready">One microphone. It appears when a text field is focused. Tap to start and stop, hold to talk, drag to move it.</string>
+    <string name="action_show_button">Show the button</string>
+    <string name="action_hide_button">Hide the button</string>
+    <string name="button_footnote">Dictator is not a keyboard, so it never replaces the one you type with. Audio stays on this phone. The button reads the focused text field, in memory, only to place the dictation. It never uses the clipboard.</string>
+    <string name="accessibility_description">Types dictated speech into the text field you are using. Dictator reads that field so the words land at the cursor, with the right spacing. It does not read the rest of the screen, and it stores nothing.</string>
 
     <string name="language_automatic">Automatic</string>
 
-    <string name="try_placeholder">Tap here, switch to the Dictator keyboard and dictate.</string>
+    <string name="try_placeholder">Tap here, then tap the floating microphone.</string>
 
     <string name="about_version">Version %1$s</string>
     <string name="about_privacy">Audio never leaves the device; the one-time model download is the only network use. MIT licensed.</string>
@@ -32,20 +35,24 @@
     <string name="whats_new_title">What\'s new</string>
     <string name="whats_new_welcome">Welcome to Dictator</string>
 
-    <string name="keyboard_switch">Next keyboard</string>
-    <string name="keyboard_needs_microphone">Open Dictator and allow the microphone to dictate.</string>
-    <string name="action_open_dictator">Open Dictator</string>
+    <string name="needs_microphone">Allow the microphone in Dictator to dictate.</string>
     <string name="status_loading">Loading the speech model…</string>
     <string name="caption_ready">Tap to toggle · Hold to talk</string>
     <string name="caption_recording">Release to finish, or tap again</string>
     <string name="caption_transcribing">Transcribing…</string>
     <string name="mic_label">Dictate</string>
-    <string name="mic_hint">start or stop dictation</string>
     <string name="action_try_again">Try again</string>
     <string name="action_discard">Discard</string>
 
+    <string name="notification_channel">Dictation</string>
+    <string name="notification_ready">The microphone appears in a text field</string>
+    <string name="notification_listening">Listening…</string>
+    <string name="notification_transcribing">Transcribing…</string>
+
     <string name="error_no_field">Tap a text field first.</string>
     <string name="error_field_gone">The text field went away before the text could be typed.</string>
+    <string name="error_needs_accessibility">Turn on Dictator under Accessibility so it can type into the field.</string>
+    <string name="error_field_unsupported">This field can\'t be typed into.</string>
     <string name="model_installed">%1$s is downloaded and ready. Dictation works offline.</string>
     <string name="model_offer">Dictator needs the %1$s speech model (%2$s MB), downloaded once. Wi-Fi is recommended.</string>
     <string name="model_allow_mobile">Also download over mobile data</string>

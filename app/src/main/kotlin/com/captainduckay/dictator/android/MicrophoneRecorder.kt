@@ -30,7 +30,7 @@ class MicrophoneRecorder(
         buffer.onCapacityReached = { main.post(onLimit) }
     }
 
-    // RECORD_AUDIO is checked by the keyboard before a dictation can start.
+    // RECORD_AUDIO is checked by the floating button before a dictation can start.
     @SuppressLint("MissingPermission")
     override fun start(onLevel: (Float) -> Unit) {
         check(record == null) { "Already recording." }

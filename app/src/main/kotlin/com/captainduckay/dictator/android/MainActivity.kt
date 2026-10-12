@@ -1,13 +1,13 @@
 package com.captainduckay.dictator.android
 
 import android.Manifest
+import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-import android.provider.Settings.ACTION_INPUT_METHOD_SETTINGS
-import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -53,6 +53,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.work.WorkInfo
@@ -61,10 +62,11 @@ import com.captainduckay.dictator.core.Changelog
 import com.captainduckay.dictator.core.DictationLanguage
 import com.captainduckay.dictator.core.WhatsNew
 import java.util.Locale
+import android.provider.Settings as AndroidSettings
 
 /**
- * The container app: setup only. Same sections as the iOS app (microphone, language, keyboard,
- * model), plus a field to try the keyboard. Dictation itself runs in the keyboard (ADR 0001).
+ * Setup only: microphone, the floating button, language and the model, plus a field to try it.
+ * Dictation itself runs in [FloatingButtonService] (ADR 0007).
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,17 +87,61 @@ class MainActivity : ComponentActivity() {
 
     fun readDoc(name: String): String = assets.open("docs/$name").bufferedReader().use { it.readText() }
 
-    fun isKeyboardEnabled(): Boolean =
-        getSystemService(InputMethodManager::class.java).enabledInputMethodList.any { it.packageName == packageName }
-
     fun hasMicrophone() = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
-    fun openKeyboardSettings() = startActivity(Intent(ACTION_INPUT_METHOD_SETTINGS))
+    fun hasNotifications(): Boolean {
+        if (Build.VERSION.SDK_INT < 33) return true
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+    }
 
-    fun showKeyboardPicker() = getSystemService(InputMethodManager::class.java).showInputMethodPicker()
+    fun canOverlay() = AndroidSettings.canDrawOverlays(this)
+
+    fun isTypingEnabled(): Boolean {
+        val enabled =
+            AndroidSettings.Secure.getString(contentResolver, AndroidSettings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+                ?: return false
+        val component = ComponentName(this, DictatorAccessibilityService::class.java)
+        return enabled.split(':').any {
+            it.equals(component.flattenToString(), ignoreCase = true) ||
+                it.equals(component.flattenToShortString(), ignoreCase = true)
+        }
+    }
 
     fun openAppSettings() =
-        startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
+        startActivity(
+            Intent(
+                AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", packageName, null),
+            ),
+        )
+
+    fun openOverlaySettings() =
+        startActivity(Intent(AndroidSettings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+
+    fun openTypingSettings() {
+        val component = ComponentName(this, DictatorAccessibilityService::class.java).flattenToString()
+        val bundle = Bundle().apply { putString(SETTINGS_FRAGMENT_ARG, component) }
+        val intent =
+            Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                putExtra(SETTINGS_FRAGMENT_ARG, component)
+                putExtra(SETTINGS_FRAGMENT_BUNDLE, bundle)
+            }
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            startActivity(Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
+    }
+
+    fun showButton() = FloatingButtonService.show(this)
+
+    fun hideButton() = FloatingButtonService.hide(this)
+
+    private companion object {
+        const val SETTINGS_FRAGMENT_ARG = ":settings:fragment_args_key"
+        const val SETTINGS_FRAGMENT_BUNDLE = ":settings:show_fragment_args"
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,7 +149,9 @@ class MainActivity : ComponentActivity() {
 private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
     val activity = LocalActivity.current as MainActivity
     var microphone by remember { mutableStateOf(activity.hasMicrophone()) }
-    var keyboardEnabled by remember { mutableStateOf(activity.isKeyboardEnabled()) }
+    var overlay by remember { mutableStateOf(activity.canOverlay()) }
+    var typing by remember { mutableStateOf(activity.isTypingEnabled()) }
+    val buttonOn by FloatingButtonService.running.collectAsState()
     var language by remember { mutableStateOf(settings.language) }
     var whatsNew by remember { mutableStateOf(initialWhatsNew) }
     var showNotices by remember { mutableStateOf(false) }
@@ -113,10 +161,22 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
             microphone = it
             askedOnce = true
         }
-    // Settings can change while we're away (permission, enabled keyboards): re-check on return.
+    val notifications =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+            activity.showButton()
+        }
+    val showButton = {
+        if (Build.VERSION.SDK_INT >= 33 && !activity.hasNotifications()) {
+            notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            activity.showButton()
+        }
+    }
+    // Settings can change while we're away (permission, overlay, accessibility): re-check on return.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         microphone = activity.hasMicrophone()
-        keyboardEnabled = activity.isKeyboardEnabled()
+        overlay = activity.canOverlay()
+        typing = activity.isTypingEnabled()
     }
 
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) }) { padding ->
@@ -142,19 +202,39 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
                 }
                 Footnote(stringResource(R.string.microphone_footnote))
             }
-            Section(stringResource(R.string.section_keyboard)) {
-                if (keyboardEnabled) {
-                    Text(stringResource(R.string.keyboard_enabled))
-                    OutlinedButton(
-                        onClick = activity::showKeyboardPicker,
-                    ) { Text(stringResource(R.string.action_switch_keyboard)) }
-                } else {
-                    Text(stringResource(R.string.keyboard_steps))
-                    Button(
-                        onClick = activity::openKeyboardSettings,
-                    ) { Text(stringResource(R.string.action_enable_keyboard)) }
+            Section(stringResource(R.string.section_button)) {
+                when {
+                    !overlay -> {
+                        Text(stringResource(R.string.overlay_needed))
+                        Button(onClick = activity::openOverlaySettings) {
+                            Text(stringResource(R.string.action_allow_overlay))
+                        }
+                    }
+                    !typing -> {
+                        Text(stringResource(R.string.typing_needed))
+                        Button(onClick = activity::openTypingSettings) {
+                            Text(stringResource(R.string.action_allow_typing))
+                        }
+                        if (buttonOn) {
+                            OutlinedButton(onClick = activity::hideButton) {
+                                Text(stringResource(R.string.action_hide_button))
+                            }
+                        } else {
+                            OutlinedButton(onClick = showButton) { Text(stringResource(R.string.action_show_button)) }
+                        }
+                    }
+                    else -> {
+                        Text(stringResource(R.string.button_ready))
+                        if (buttonOn) {
+                            OutlinedButton(onClick = activity::hideButton) {
+                                Text(stringResource(R.string.action_hide_button))
+                            }
+                        } else {
+                            Button(onClick = showButton) { Text(stringResource(R.string.action_show_button)) }
+                        }
+                    }
                 }
-                Footnote(stringResource(R.string.keyboard_footnote))
+                Footnote(stringResource(R.string.button_footnote))
             }
             Section(stringResource(R.string.section_language)) {
                 Column(Modifier.selectableGroup()) {

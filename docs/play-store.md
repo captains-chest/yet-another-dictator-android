@@ -6,7 +6,7 @@ gains a permission or network access, update this file and the privacy policy in
 - Package: `com.captainduckay.dictator.android`
 - Privacy policy: https://captains-chest.com/dictator/privacy
 - Support / website: https://captains-chest.com · Contact email: the developer account's address
-- Category: **Productivity** · Tags: Keyboard, Productivity
+- Category: **Productivity** · Tags: Productivity
 - Price: Free · Ads: **No** · In-app purchases: **No**
 
 ## Store listing — English (en-US)
@@ -14,16 +14,16 @@ gains a permission or network access, update this file and the privacy policy in
 **App name** (30): `Dictator: Offline Dictation`
 
 **Short description** (80):
-`Private dictation keyboard for Danish and English. Works offline, on your phone.`
+`Private dictation for Danish and English. A floating button. Works offline.`
 
 **Full description** (4000):
 
 ```
 Dictator turns speech into text in any app, right on your phone. Nothing you say leaves the device.
 
-Switch to the Dictator keyboard in any text field, tap the big microphone and speak. Tap again to
-finish, or hold the button while you talk and let go when you are done. Dictator types the text
-where your cursor is, with the right spacing and capital letters.
+Focus a text field and the microphone appears. Tap it and speak into the field you are already using.
+Your keyboard stays. Tap again to finish, or hold the button while you talk and let go when you
+are done. Dictator types the text where your cursor is, with the right spacing and capital letters.
 
 • Private. Speech recognition runs on your phone with OpenAI's Whisper model. Audio never leaves the
   device; the one-time model download (about 190 MB, Wi-Fi recommended) is the only network use.
@@ -37,7 +37,8 @@ where your cursor is, with the right spacing and capital letters.
 Dictator is open source (MIT) and part of the Yet Another Dictator family for macOS, iOS and
 Android: https://github.com/captains-chest/yet-another-dictator-android
 
-Requires Android 12 or later. The speech model (about 190 MB) is installed together with the app.
+Requires Android 12 or later. After install, download the speech model once (about 190 MB). Allow
+the floating button and turn Dictator on under Accessibility so it can type into the current field.
 ```
 
 ## Store listing — Danish (da-DK)
@@ -45,7 +46,7 @@ Requires Android 12 or later. The speech model (about 190 MB) is installed toget
 **App-navn**: `Dictator: Offline diktering`
 
 **Kort beskrivelse**:
-`Privat dikteringstastatur til dansk og engelsk. Virker offline på din telefon.`
+`Privat diktering til dansk og engelsk. En svævende knap. Virker offline.`
 
 **Fuld beskrivelse**:
 
@@ -53,9 +54,10 @@ Requires Android 12 or later. The speech model (about 190 MB) is installed toget
 Dictator omsætter tale til tekst i alle apps, direkte på din telefon. Intet af det, du siger,
 forlader enheden.
 
-Skift til Dictator-tastaturet i et tekstfelt, tryk på den store mikrofon, og tal. Tryk igen for at
-afslutte, eller hold knappen nede, mens du taler, og slip, når du er færdig. Dictator skriver
-teksten, hvor markøren står, med de rigtige mellemrum og store bogstaver.
+Sæt markøren i et tekstfelt, så vises mikrofonen. Tryk på den, og tal ind i feltet, du allerede bruger. Dit
+tastatur bliver. Tryk igen for at afslutte, eller hold knappen nede, mens du taler, og slip, når
+du er færdig. Dictator skriver teksten, hvor markøren står, med de rigtige mellemrum og store
+bogstaver.
 
 • Privat. Talegenkendelsen kører på din telefon med OpenAI's Whisper-model. Lyd forlader aldrig
   enheden; den ene download af modellen (ca. 190 MB, Wi-Fi anbefales) er den eneste brug af netværket.
@@ -69,14 +71,15 @@ teksten, hvor markøren står, med de rigtige mellemrum og store bogstaver.
 Dictator er open source (MIT) og en del af Yet Another Dictator-familien til macOS, iOS og Android:
 https://github.com/captains-chest/yet-another-dictator-android
 
-Kræver Android 12 eller nyere. Talemodellen (ca. 190 MB) installeres sammen med appen.
+Kræver Android 12 eller nyere. Efter installation downloades talemodellen én gang (ca. 190 MB).
+Tillad den svævende knap, og slå Dictator til under Hjælpefunktioner, så den kan skrive i feltet.
 ```
 
 ## Graphics still needed
 
 - App icon 512 × 512 PNG (from the iOS/macOS icon).
 - Feature graphic 1024 × 500.
-- At least 2 phone screenshots (setup screen, keyboard in use), ideally EN and DA.
+- At least 2 phone screenshots (setup screen, the floating button over a text field), ideally EN and DA.
 
 ## Data safety
 
@@ -111,6 +114,12 @@ will then show "No data collected" and "No data shared".
 - **News app:** No.
 - **Permissions:** `RECORD_AUDIO` is a normal runtime permission (no special declaration form).
   Describe it if asked: "The microphone is used only while the user dictates, for on-device speech
-  recognition in the keyboard. Audio is not stored or transmitted."
-- **Keyboard (IME):** Play shows users Android's standard keyboard warning. Nothing to declare,
-  but reviewers may test it: the listing explains how to enable it.
+  recognition. Audio is not stored or transmitted."
+- **Accessibility service:** Declare it. It is the core feature: typing dictated text into the
+  focused field. It reads only that field, in memory, and stores nothing. The in-app disclosure
+  and the service description say this.
+- **Foreground service, special use:** the floating button the user turns on. Subtype in the
+  manifest: a dictation button that stays on screen so the user can dictate without switching
+  keyboards. The microphone type is taken while the button is showing; capture still starts only
+  when the user dictates.
+- **Draw over other apps:** the same button. The user grants it from the setup screen.

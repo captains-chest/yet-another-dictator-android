@@ -1,6 +1,6 @@
 # 1. The keyboard records, transcribes and types; the app only sets things up
 
-- Status: Accepted
+- Status: Superseded by [ADR 0007](0007-floating-button.md) for how dictation is started and how text is inserted. Capture, transcription and typing still share one process, with no clipboard and no stored audio.
 - Date: 2026-10-10
 
 ## Context

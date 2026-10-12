@@ -2,9 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Used by the keyboard only while a dictation is running. -->
+    <!-- Used only while a dictation is recording. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-feature android:name="android.hardware.microphone" android:required="true" />
+
+    <!-- The floating button draws over other apps. The user grants this in Settings. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Only for the one-time, user-started model download (ADR 0006). Audio never leaves the device. -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -31,16 +38,24 @@
         </activity>
 
         <service
-            android:name=".DictatorIme"
+            android:name=".FloatingButtonService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse|microphone">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="A floating dictation button the user turns on, so they can dictate into the current text field without switching keyboards." />
+        </service>
+
+        <service
+            android:name=".DictatorAccessibilityService"
             android:exported="true"
-            android:label="@string/app_name"
-            android:permission="android.permission.BIND_INPUT_METHOD">
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
-                <action android:name="android.view.InputMethod" />
+                <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
             <meta-data
-                android:name="android.view.im"
-                android:resource="@xml/method" />
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service" />
         </service>
     </application>
 </manifest>

@@ -3,33 +3,34 @@
 Native Android companion to the [macOS Dictator app](https://github.com/captains-chest/yet-another-dictator)
 and the [iOS app](https://github.com/captains-chest/yet-another-dictator-ios).
 
-On-device dictation that works in any text field via a keyboard (an Android input method).
+On-device dictation that works in any text field from a floating microphone. Your keyboard stays.
 Uses a Kotlin port of the shared [DictationCore](https://github.com/captains-chest/DictationCore)
 logic and whisper.cpp.
 
 ## Design goals
 
 - **Simple and robust** — same philosophy as the macOS app: no fancy features, just reliable dictation.
-- **Platform native** — a keyboard with one big mic button, Material You colours, Danish and English UI.
+- **Platform native** — a floating microphone, Material You colours, Danish and English UI.
 - **Hold** = push-to-talk, **tap** = toggle (same dual-mode as the macOS hotkey and the iOS keyboard).
 - **Smaller model** — Whisper Small (q5_1) via whisper.cpp, on-device. Downloaded once after install (190 MB, Wi-Fi recommended).
 - **Shared core** — pure logic lives in `core`, a tested Kotlin port of DictationCore (ADR 0005).
 
 ## Architecture
 
-Recording, transcription and typing all run in the keyboard. Unlike iOS, an Android keyboard may
-use the microphone and has the memory for a Whisper model, so there is no hand-off (ADR 0001).
+Recording, transcription and typing all run in one process. The floating button records and
+transcribes; an accessibility service types into the focused field. There is no keyboard and no
+hand-off (ADR 0007, which supersedes the interaction in ADR 0001).
 
 ```
-Keyboard (DictatorIme, an InputMethodService)
+Floating button (FloatingButtonService)
   └─ MicrophoneRecorder: AudioRecord → CaptureBuffer (16 kHz mono float)
   └─ WhisperTranscriber → JNI → whisper.cpp (Whisper Small q5_1, downloaded once into app storage, ADR 0006)
   └─ DictationController
-  └─ ImeTextInserter → InputConnection.commitText (chunked, cancellable), SmartJoin context
+  └─ AccessibilityFieldEditor → the focused field (chunked, cancellable), SmartJoin context
 App (MainActivity, Jetpack Compose)
-  └─ Microphone permission, keyboard setup, language, model status, a field to try it, licenses
+  └─ Microphone, overlay and accessibility setup, language, model status, a field to try it, licenses
 core (Kotlin/JVM module, no Android dependencies)
-  └─ DictationController, SmartJoin, TranscriptCleaner, TextChunker, SpeechActivity,
+  └─ DictationController, SmartJoin, FieldEdit, TranscriptCleaner, TextChunker, SpeechActivity,
      DictationPrompt, DictationLanguage, CaptureBuffer, AppVersion, WhatsNew
 ```
 
@@ -66,16 +67,22 @@ adb install build/dictator-universal.apk && adb install app/build/outputs/apk/an
 adb shell am instrument -w com.captainduckay.dictator.android.test/androidx.test.runner.AndroidJUnitRunner   # JFK sample, JNI + model
 ```
 
-Then: install, open Dictator, allow the microphone, tap **Turn on keyboard**, enable Dictator, and
-switch to it in the **Try it** field.
+Then: install, open Dictator, allow the microphone, allow the button to draw over other apps, turn
+Dictator on under Accessibility, tap **Show the button**, focus the **Try it** field and tap the
+microphone. The microphone is the only button, and it appears only while a text field is focused.
 
 ## Permissions
 
 Each one is required.
 
-- **`RECORD_AUDIO`:** the keyboard records only while a dictation is running.
-- **`BIND_INPUT_METHOD`** (on the keyboard service): lets Android bind the keyboard. Android warns
-  that a keyboard can collect what you type; Dictator stores nothing, and audio and text never leave the device.
+- **`RECORD_AUDIO`:** the button records only while a dictation is running.
+- **Draw over other apps:** the floating button. Granted in Settings, not as a runtime dialog.
+- **Accessibility service:** types into the focused field, and reads only that field to place the
+  text. It does not read the rest of the screen, and it stores nothing.
+- **Foreground service** (`specialUse` and `microphone`): keeps the button on screen after you leave
+  the app. The microphone type is taken when you show the button; the microphone itself opens only
+  while a dictation is recording. A notification stays up while the button is showing.
+- **`POST_NOTIFICATIONS`:** that notification, on Android 13 and later.
 
 - **`INTERNET`, `ACCESS_NETWORK_STATE`:** only for the one-time model download that you start in
   the app (ADR 0006). No audio, text or analytics are ever sent. Backups are off.
@@ -93,16 +100,17 @@ These are requirements for every change:
 - **Audio never leaves the device; the one-time model download is the only network use.** The
   download needs the user's consent, prefers Wi-Fi and is verified against the bundled manifest.
   Any other network use needs an ADR.
-- **No clipboard.** Text goes in through `InputConnection.commitText`, never the clipboard.
-- **Least privilege.** Only the microphone, and only while dictating. Nothing typed or said is
-  stored or logged.
+- **No clipboard.** Text goes into the focused field through the accessibility service, never the clipboard.
+- **Least privilege.** The microphone only while dictating. The overlay and the accessibility
+  service exist so the button can sit on screen and type into the current field. Nothing typed or
+  said is stored or logged.
 
 ## Status
 
-The keyboard, the app, the JNI bridge and the model download are in place, and CI builds and tests
-them. Not yet measured on a real phone: latency, peak memory, Danish/English quality, and how the
-keyboard behaves in apps with unusual text fields (ADR 0001, 0004), and the download
-on a real network (ADR 0006).
+The floating button, the app, the JNI bridge and the model download are in place, and CI builds and
+tests them. Not yet measured on a real phone: latency after the shorter Whisper window, peak memory
+while the button is showing, Danish/English quality, and how typing behaves in apps whose fields
+are not exposed to accessibility (ADR 0007, 0002), and the download on a real network (ADR 0006).
 
 ## Conventions
 
