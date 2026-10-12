@@ -7,6 +7,13 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
+- Dictation is one floating microphone. It appears when a text field is focused, and it is hidden
+  otherwise. Tap to start and stop, hold to talk, drag to move it. Your own keyboard stays, and
+  text is typed into the focused field. There is no second shortcut that turns dictation on and
+  off. The Dictator keyboard is gone, which also removes the error some apps showed when switching
+  away from it (ADR 0007, supersedes the keyboard interaction in ADR 0001).
+- Transcription uses the length of the clip instead of a full 30-second Whisper window, and runs on
+  the phone's fast cores, so a short dictation finishes sooner. Same model.
 - The speech model is no longer bundled. After install, the app shows its size (about 190 MB) and
   downloads it only when you tap Download, over Wi-Fi unless you allow mobile data. The download
   resumes, retries and checks every file against a SHA-256 manifest built into the app (ADR 0006,
