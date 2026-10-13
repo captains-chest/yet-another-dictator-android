@@ -9,6 +9,13 @@ class FieldEditTest {
         assertEquals(FieldSnapshot("Hello there", 11, 11), FieldEdit.insert(field, " there"))
     }
 
+    @Test fun placeholderTextIsAnEmptyField() {
+        val field = FieldEdit.snapshot("Type a message", 0, 0, showingHint = true)
+        assertEquals(FieldSnapshot("", 0, 0), field)
+        assertEquals(FieldSnapshot("Hello", 5, 5), FieldEdit.insert(field, "Hello"))
+        assertEquals("", FieldEdit.preceding(field, 100))
+    }
+
     @Test fun insertReplacesASelection() {
         val field = FieldEdit.snapshot("ab cd", 3, 5)
         assertEquals(FieldSnapshot("ab xy", 5, 5), FieldEdit.insert(field, "xy"))
