@@ -17,8 +17,17 @@ object FieldEdit {
     /**
      * [selectionStart] or [selectionEnd] below zero means the field did not report a caret.
      * The caret is then the end of the text, which is where speech should land.
+     *
+     * [showingHint] is true when an empty field reports its placeholder ("Message", "Search") as
+     * its text. The field is then empty: the placeholder must not end up in the dictation.
      */
-    fun snapshot(text: String, selectionStart: Int, selectionEnd: Int): FieldSnapshot {
+    fun snapshot(
+        text: String,
+        selectionStart: Int,
+        selectionEnd: Int,
+        showingHint: Boolean = false,
+    ): FieldSnapshot {
+        if (showingHint) return FieldSnapshot("", 0, 0)
         if (selectionStart < 0 || selectionEnd < 0) return FieldSnapshot(text, text.length, text.length)
         val start = selectionStart.coerceIn(0, text.length)
         val end = selectionEnd.coerceIn(0, text.length)

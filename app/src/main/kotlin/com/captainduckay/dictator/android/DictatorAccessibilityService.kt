@@ -72,7 +72,14 @@ class DictatorAccessibilityService : AccessibilityService(), FocusedField {
                     FieldRead.Unsupported
                 } else {
                     val text = found.text?.toString() ?: ""
-                    FieldRead.Ready(FieldEdit.snapshot(text, found.textSelectionStart, found.textSelectionEnd))
+                    FieldRead.Ready(
+                        FieldEdit.snapshot(
+                            text,
+                            found.textSelectionStart,
+                            found.textSelectionEnd,
+                            showingHint = found.isShowingHintText,
+                        ),
+                    )
                 }
             } finally {
                 found.recycle()

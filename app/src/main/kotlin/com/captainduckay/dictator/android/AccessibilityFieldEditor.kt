@@ -4,11 +4,9 @@ import android.content.Context
 import com.captainduckay.dictator.core.FieldEdit
 import com.captainduckay.dictator.core.FieldSnapshot
 import com.captainduckay.dictator.core.PrecedingTextReading
-import com.captainduckay.dictator.core.TextChunker
 import com.captainduckay.dictator.core.TextInserting
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.yield
 
 /** What the focused field looks like right now, or why it can't be typed into. */
 sealed interface FieldRead {
@@ -27,8 +25,10 @@ interface FocusedField {
 }
 
 /**
- * The controller's typing port for the floating button. Each chunk is a fresh read of the field,
- * so a cancelled dictation stops between chunks and a field that disappears fails the rest.
+ * The controller's typing port for the floating button. A dictation is one read and one write of
+ * the field. The write replaces the whole text, so splitting it into chunks would only add
+ * rewrites, and each later chunk would start from a read that may not show the earlier ones yet
+ * (the node can still be the cached copy from before the write), which drops text.
  */
 internal class AccessibilityFieldEditor(
     private val context: Context,
@@ -50,11 +50,8 @@ internal class AccessibilityFieldEditor(
     }
 
     override suspend fun insert(text: String) {
-        for (chunk in TextChunker.chunks(text)) {
-            currentCoroutineContext().ensureActive()
-            edit { FieldEdit.insert(it, chunk) }
-            yield()
-        }
+        currentCoroutineContext().ensureActive()
+        edit { FieldEdit.insert(it, text) }
     }
 
     override suspend fun deleteBackward(count: Int) {
