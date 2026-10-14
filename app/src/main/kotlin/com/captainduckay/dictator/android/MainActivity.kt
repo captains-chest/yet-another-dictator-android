@@ -60,6 +60,8 @@ import androidx.work.WorkInfo
 import com.captainduckay.dictator.core.AppVersion
 import com.captainduckay.dictator.core.Changelog
 import com.captainduckay.dictator.core.DictationLanguage
+import com.captainduckay.dictator.core.ModelStartup
+import com.captainduckay.dictator.core.SpeechModelId
 import com.captainduckay.dictator.core.WhatsNew
 import java.util.Locale
 import android.provider.Settings as AndroidSettings
@@ -156,6 +158,14 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
     var whatsNew by remember { mutableStateOf(initialWhatsNew) }
     var showNotices by remember { mutableStateOf(false) }
     var askedOnce by remember { mutableStateOf(false) }
+    // Nothing downloads at launch. With no model chosen, the picker asks (ADR 0008).
+    var chosenModel by remember { mutableStateOf(startupModel(activity)) }
+    var showModelPicker by remember { mutableStateOf(chosenModel == null) }
+    val chooseModel = { model: SpeechModelId ->
+        SpeechModel.choose(activity, model)
+        chosenModel = model
+        showModelPicker = false
+    }
     val permission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
             microphone = it
@@ -237,6 +247,7 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
                 Footnote(stringResource(R.string.button_footnote))
             }
             Section(stringResource(R.string.section_language)) {
+                if (chosenModel?.englishOnly == true) Footnote(stringResource(R.string.language_english_only))
                 Column(Modifier.selectableGroup()) {
                     DictationLanguage.entries.forEach { option ->
                         Row(
@@ -264,7 +275,8 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
                     }
                 }
             }
-            Section(stringResource(R.string.section_model)) { ModelSection() }
+            Section(stringResource(R.string.section_model)) { ModelSection(chosenModel) }
+            Section(stringResource(R.string.section_models)) { ModelList(chosenModel, chooseModel) }
             Section(stringResource(R.string.section_try)) {
                 var text by remember { mutableStateOf("") }
                 OutlinedTextField(
@@ -298,6 +310,9 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
         }
         WhatsNew.Decision.None -> Unit
     }
+    if (showModelPicker) {
+        ModelPickerDialog(onChoose = chooseModel, onDismiss = { showModelPicker = false })
+    }
     if (showNotices) {
         TextDialog(
             title = stringResource(R.string.action_notices),
@@ -310,21 +325,157 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
     }
 }
 
+/** The model at launch: the saved choice, or a verified Whisper download from before the picker. */
+private fun startupModel(context: android.content.Context): SpeechModelId? =
+    when (val start = ModelStartup.decide(SpeechModel.chosen(context), SpeechModel.installed(context))) {
+        ModelStartup.ShowPicker -> null
+        is ModelStartup.Use ->
+            start.model.also {
+                if (SpeechModel.chosen(context) ==
+                    null
+                ) {
+                    SpeechModel.choose(context, it)
+                }
+            }
+    }
+
+private fun megabytes(bytes: Long) = String.format(Locale.ROOT, "%.0f", bytes / 1_000_000.0)
+
+@Composable
+private fun accuracyNote(model: SpeechModelId) =
+    stringResource(
+        when (model) {
+            SpeechModelId.PARAKEET_V2 -> R.string.model_parakeet_accuracy
+            SpeechModelId.WHISPER_SMALL -> R.string.model_whisper_accuracy
+        },
+    )
+
+@Composable
+private fun speedNote(model: SpeechModelId) =
+    stringResource(
+        when (model) {
+            SpeechModelId.PARAKEET_V2 -> R.string.model_parakeet_speed
+            SpeechModelId.WHISPER_SMALL -> R.string.model_whisper_speed
+        },
+    )
+
+/** One model's name, size, languages, accuracy and speed. Used by the picker and the list. */
+@Composable
+private fun ModelSummary(model: SpeechModelId, recommended: Boolean) {
+    val context = LocalContext.current
+    val size = remember(model) { megabytes(SpeechModel.downloadBytes(context, model)) }
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            if (recommended) {
+                stringResource(R.string.model_recommended, SpeechModel.displayName(model))
+            } else {
+                SpeechModel.displayName(model)
+            },
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Footnote(
+            stringResource(
+                if (model.englishOnly) R.string.model_meta_english else R.string.model_meta_multilingual,
+                size,
+            ),
+        )
+        Text(accuracyNote(model), style = MaterialTheme.typography.bodyMedium)
+        Footnote(speedNote(model))
+    }
+}
+
 /**
- * Explicit opt-in download (ADR 0006): shows the size, recommends Wi-Fi, and only uses mobile data
- * when the user ticks the box. Nothing downloads until they tap the button.
+ * Shown at launch only while no model is chosen. Lists the models best first. Choosing one downloads
+ * nothing: the Model section then asks, with the usual Wi-Fi / mobile data choice.
  */
 @Composable
-private fun ModelSection() {
+private fun ModelPickerDialog(onChoose: (SpeechModelId) -> Unit, onDismiss: () -> Unit) {
+    var selected by remember { mutableStateOf(SpeechModelId.ranked.first()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.model_picker_title)) },
+        text = {
+            Column(
+                Modifier
+                    .verticalScroll(rememberScrollState())
+                    .selectableGroup(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(stringResource(R.string.model_picker_intro), style = MaterialTheme.typography.bodyMedium)
+                SpeechModelId.ranked.forEachIndexed { index, model ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .selectable(selected = selected == model, role = Role.RadioButton, onClick = {
+                                selected = model
+                            }),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        RadioButton(selected = selected == model, onClick = null)
+                        Column(Modifier.padding(start = 12.dp)) { ModelSummary(model, recommended = index == 0) }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onChoose(selected) }) { Text(stringResource(R.string.action_choose_model)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_later)) } },
+    )
+}
+
+/** Switch to another model (download on demand, same opt-in) or delete one that isn't in use. */
+@Composable
+private fun ModelList(chosen: SpeechModelId?, onChoose: (SpeechModelId) -> Unit) {
     val context = LocalContext.current
-    val sizeMb = remember { String.format(Locale.ROOT, "%.0f", SpeechModel.downloadBytes(context) / 1_000_000.0) }
     val work by remember { ModelDownloadWorker.observe(context) }.collectAsState(initial = emptyList())
-    val info = work.firstOrNull()
+    val busy = work.any { !it.state.isFinished }
+    var revision by remember { mutableStateOf(0) }
+    SpeechModelId.ranked.forEachIndexed { index, model ->
+        val installed = remember(revision, work) { SpeechModel.isInstalled(context, model) }
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            ModelSummary(model, recommended = index == 0)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (model == chosen) {
+                    Footnote(stringResource(R.string.model_in_use))
+                } else {
+                    OutlinedButton(onClick = { onChoose(model) }, enabled = !busy) {
+                        Text(stringResource(if (installed) R.string.action_use_model else R.string.action_choose_model))
+                    }
+                    if (installed) {
+                        OutlinedButton(onClick = {
+                            SpeechModel.delete(context, model)
+                            revision++
+                        }) { Text(stringResource(R.string.action_delete_model)) }
+                    }
+                }
+            }
+        }
+    }
+    if (busy) Footnote(stringResource(R.string.model_switch_busy))
+}
+
+/**
+ * Explicit opt-in download of the chosen model (ADR 0006, ADR 0008): shows the size, recommends
+ * Wi-Fi, and only uses mobile data when the user ticks the box. Nothing downloads until they tap.
+ */
+@Composable
+private fun ModelSection(chosen: SpeechModelId?) {
+    if (chosen == null) {
+        Text(stringResource(R.string.model_none_chosen))
+        Footnote(stringResource(R.string.model_footnote))
+        return
+    }
+    val context = LocalContext.current
+    val name = SpeechModel.displayName(chosen)
+    val sizeMb = remember(chosen) { megabytes(SpeechModel.downloadBytes(context, chosen)) }
+    val work by remember { ModelDownloadWorker.observe(context) }.collectAsState(initial = emptyList())
+    val info = work.firstOrNull { ModelDownloadWorker.tag(chosen) in it.tags }
     var allowMobileData by remember { mutableStateOf(false) }
-    val installed = SpeechModel.isInstalled(context) || info?.state == WorkInfo.State.SUCCEEDED
+    val installed = SpeechModel.isInstalled(context, chosen) || info?.state == WorkInfo.State.SUCCEEDED
 
     when {
-        installed -> Text(stringResource(R.string.model_installed, SpeechModel.DISPLAY_NAME))
+        installed -> Text(stringResource(R.string.model_installed, name))
         info != null && !info.state.isFinished -> {
             val done = info.progress.getLong(ModelDownloadWorker.KEY_DONE, 0)
             val total = info.progress.getLong(ModelDownloadWorker.KEY_TOTAL, 0)
@@ -339,7 +490,7 @@ private fun ModelSection() {
             ) { Text(stringResource(R.string.action_cancel)) }
         }
         else -> {
-            Text(stringResource(R.string.model_offer, SpeechModel.DISPLAY_NAME, sizeMb))
+            Text(stringResource(R.string.model_offer, name, sizeMb))
             if (info?.state == WorkInfo.State.FAILED) {
                 Text(stringResource(R.string.model_failed), color = MaterialTheme.colorScheme.error)
             }
@@ -354,7 +505,7 @@ private fun ModelSection() {
                 Checkbox(checked = allowMobileData, onCheckedChange = null)
                 Text(stringResource(R.string.model_allow_mobile), Modifier.padding(start = 12.dp))
             }
-            Button(onClick = { ModelDownloadWorker.start(context, allowMobileData) }) {
+            Button(onClick = { ModelDownloadWorker.start(context, chosen, allowMobileData) }) {
                 Text(stringResource(R.string.action_download_model, sizeMb))
             }
         }

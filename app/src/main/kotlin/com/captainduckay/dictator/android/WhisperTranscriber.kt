@@ -6,6 +6,7 @@ import android.os.ParcelFileDescriptor
 import android.os.PerformanceHintManager
 import android.os.Process
 import com.captainduckay.dictator.core.DictationPrompt
+import com.captainduckay.dictator.core.SpeechModelId
 import com.captainduckay.dictator.core.Transcribing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.FileNotFoundException
 
 /** On-device transcription with whisper.cpp (ADR 0002). Audio never leaves the device. */
@@ -44,8 +46,8 @@ class WhisperTranscriber(private val context: Context) : Transcribing {
         mutex.withLock {
             if (handle != 0L) return@withLock
             withContext(dispatcher) {
-                if (!SpeechModel.isInstalled(context)) throw ModelMissing()
-                val file = SpeechModel.file(context)
+                if (!SpeechModel.isInstalled(context, SpeechModelId.WHISPER_SMALL)) throw ModelMissing()
+                val file = File(SpeechModel.folder(context, SpeechModelId.WHISPER_SMALL), SpeechModel.WHISPER_FILE_NAME)
                 val descriptor =
                     try {
                         ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)

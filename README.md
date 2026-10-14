@@ -12,7 +12,7 @@ logic and whisper.cpp.
 - **Simple and robust** — same philosophy as the macOS app: no fancy features, just reliable dictation.
 - **Platform native** — a floating microphone, Material You colours, Danish and English UI.
 - **Hold** = push-to-talk, **tap** = toggle (same dual-mode as the macOS hotkey and the iOS keyboard).
-- **Smaller model** — Whisper Small (q5_1) via whisper.cpp, on-device. Downloaded once after install (190 MB, Wi-Fi recommended).
+- **Your choice of model** — NVIDIA Parakeet TDT 0.6B v2 (English, most accurate, int8, about 661 MB, via sherpa-onnx) or Whisper Small (q5_1, Dansk/English, 190 MB, via whisper.cpp), on-device. Picked on first launch; only the chosen one is downloaded, after you confirm (Wi-Fi recommended).
 - **Shared core** — pure logic lives in `core`, a tested Kotlin port of DictationCore (ADR 0005).
 
 ## Architecture
@@ -24,7 +24,10 @@ hand-off (ADR 0007, which supersedes the interaction in ADR 0001).
 ```
 Floating button (FloatingButtonService)
   └─ MicrophoneRecorder: AudioRecord → CaptureBuffer (16 kHz mono float)
-  └─ WhisperTranscriber → JNI → whisper.cpp (Whisper Small q5_1, downloaded once into app storage, ADR 0006)
+  └─ ChosenModelTranscriber (the model picked on first launch, ADR 0008)
+       ├─ ParakeetTranscriber → sherpa-onnx (Parakeet TDT 0.6B v2 int8, CPU)
+       └─ WhisperTranscriber → JNI → whisper.cpp (Whisper Small q5_1)
+     both loaded only from app storage after the opt-in download (ADR 0006)
   └─ DictationController
   └─ AccessibilityFieldEditor → the focused field (chunked, cancellable), SmartJoin context
 App (MainActivity, Jetpack Compose)
@@ -43,13 +46,13 @@ Requires JDK 17+, the Android SDK (compileSdk 37) and NDK 28.2.13676358 with CMa
 Gradle downloads whisper.cpp 1.9.5 (pinned by SHA-256) the first time it builds the native code.
 
 ```sh
-./gradlew bundleRelease         # the AAB for Play (~5 MB; no model inside)
+./gradlew bundleRelease         # the AAB for Play (no model inside; sherpa-onnx adds ~32 MB per ABI)
 scripts/build-universal-apk.sh  # one installable APK, for sideloading
 scripts/fetch-model.sh && scripts/push-model.sh   # optional: put the verified model on a debug build via adb
 ```
 
-No build contains the model (ADR 0006). After install, the app shows the model's size and downloads
-it only when you tap **Download** (Wi-Fi only unless you allow mobile data). Every file is checked
+No build contains a model (ADR 0006). On first launch the app asks which model to use, best first
+(ADR 0008); then it shows that model's size and downloads it only when you tap **Download** (Wi-Fi only unless you allow mobile data). Every file is checked
 against the SHA-256 manifest (`scripts/model-manifest.txt`) that ships inside the signed APK.
 
 Releases: push a `v*` tag with a matching CHANGELOG section. The Release workflow builds a signed
@@ -84,20 +87,21 @@ Each one is required.
   while a dictation is recording. A notification stays up while the button is showing.
 - **`POST_NOTIFICATIONS`:** that notification, on Android 13 and later.
 
-- **`INTERNET`, `ACCESS_NETWORK_STATE`:** only for the one-time model download that you start in
-  the app (ADR 0006). No audio, text or analytics are ever sent. Backups are off.
+- **`INTERNET`, `ACCESS_NETWORK_STATE`:** only for downloading the model you chose, which you start
+  in the app (ADR 0006, ADR 0008). No audio, text or analytics are ever sent. Backups are off.
 
 ## Requirements
 
 - Android 12 (API 31) or later, arm64 phones (x86_64 is built for the emulator) (ADR 0003).
 - Dependencies are pinned in `gradle/libs.versions.toml`; Dependabot proposes bumps as PRs.
-  whisper.cpp and the model are pinned by SHA-256 and bumped by hand.
+  whisper.cpp, the sherpa-onnx AAR (fetched at build time from its GitHub release, see
+  `app/build.gradle.kts`) and the models are pinned by SHA-256 and bumped by hand.
 
 ## Privacy rules (same as the macOS and iOS apps)
 
 These are requirements for every change:
 
-- **Audio never leaves the device; the one-time model download is the only network use.** The
+- **Audio never leaves the device; downloading the chosen model is the only network use.** The
   download needs the user's consent, prefers Wi-Fi and is verified against the bundled manifest.
   Any other network use needs an ADR.
 - **No clipboard.** Text goes into the focused field through the accessibility service, never the clipboard.
@@ -121,3 +125,12 @@ dependencies, small PRs merged on green CI. These are the same conventions as th
 
 MIT © 2026 CaptainDuckay. See [LICENSE](LICENSE). Third-party components are credited in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Model attribution
+
+The Parakeet model is "parakeet-tdt-0.6b-v2" by NVIDIA Corporation, licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+([source](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2)), used as exported to int8 ONNX for
+sherpa-onnx by k2-fsa
+([csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8](https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8)).
+See `THIRD_PARTY_NOTICES.md`.

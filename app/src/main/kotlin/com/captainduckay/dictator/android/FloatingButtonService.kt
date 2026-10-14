@@ -42,7 +42,7 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val windowManager by lazy { getSystemService(WindowManager::class.java) }
     private lateinit var settings: Settings
-    private lateinit var transcriber: WhisperTranscriber
+    private lateinit var transcriber: ChosenModelTranscriber
     private lateinit var controller: DictationController
     private lateinit var panel: BubblePanel
     private lateinit var params: WindowManager.LayoutParams
@@ -81,7 +81,7 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
         microphoneType = true
         if (!enterForeground()) return
         mutableRunning.value = true
-        transcriber = WhisperTranscriber(this)
+        transcriber = ChosenModelTranscriber(this)
         val fields =
             object : FocusedField {
                 override fun read() = DictatorAccessibilityService.field()?.read() ?: FieldRead.None
@@ -134,6 +134,14 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
             }
         }
         scope.launch { controller.loadModel() }
+        // A new choice or a finished download: load that model (ADR 0008).
+        scope.launch {
+            SpeechModel.changes.collect {
+                val state = controller.state.value
+                // Never interrupt a dictation; the next change or launch loads it.
+                if (state != DictationState.Recording && state != DictationState.Transcribing) controller.loadModel()
+            }
+        }
         scope.launch {
             controller.level.collect { render() }
         }

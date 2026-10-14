@@ -33,6 +33,6 @@ class ModelManifestTest {
     @Test fun theShippedManifestParses() {
         val text = java.io.File("../scripts/model-manifest.txt").readText()
         val manifest = ModelManifest.parse(text)
-        assertEquals(listOf("ggml-small-q5_1"), manifest.modelIds)
+        assertEquals(listOf("ggml-small-q5_1", "parakeet-tdt-0.6b-v2-int8"), manifest.modelIds)
     }
 }

@@ -1,3 +1,6 @@
+import java.net.URI
+import java.security.MessageDigest
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -93,8 +96,53 @@ android.sourceSets
     .assets.directories += listOf("build/generated/docs/assets", "build/generated/manifest/assets")
 tasks.named("preBuild") { dependsOn(bundleDocs, bundleModelManifest) }
 
+// sherpa-onnx runs the Parakeet model (ADR 0008). It isn't published to Maven Central, so the
+// official release AAR is downloaded at build time and must match this pinned SHA-256, the same way
+// the model files are pinned. Bump both together after reviewing the release.
+val sherpaOnnxVersion = "1.13.8"
+val sherpaOnnxSha256 = "633c24321e06b1fe79feafa03ea16cbc0f8a286641e2da3559bac91bdb13bd96"
+val sherpaOnnxAar = layout.buildDirectory.file("sherpa-onnx/sherpa-onnx-$sherpaOnnxVersion.aar")
+
+val fetchSherpaOnnx =
+    tasks.register("fetchSherpaOnnx") {
+        val target = sherpaOnnxAar
+        val expected = sherpaOnnxSha256
+        val url =
+            "https://github.com/k2-fsa/sherpa-onnx/releases/download/v$sherpaOnnxVersion/sherpa-onnx-$sherpaOnnxVersion.aar"
+        outputs.file(target)
+        doLast {
+            fun sha256(file: File): String {
+                val digest = MessageDigest.getInstance("SHA-256")
+                file.inputStream().use { input ->
+                    val buffer = ByteArray(1 shl 16)
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read < 0) break
+                        digest.update(buffer, 0, read)
+                    }
+                }
+                return digest.digest().joinToString("") { "%02x".format(it) }
+            }
+
+            val file = target.get().asFile
+            if (file.isFile && sha256(file) == expected) return@doLast
+            file.parentFile.mkdirs()
+            val part = File(file.path + ".part")
+            URI(url).toURL().openStream().use { input -> part.outputStream().use { input.copyTo(it) } }
+            val actual = sha256(part)
+            if (actual != expected) {
+                part.delete()
+                throw GradleException("sherpa-onnx AAR SHA-256 mismatch: expected $expected, got $actual")
+            }
+            part.renameTo(file)
+        }
+    }
+
+tasks.named("preBuild") { dependsOn(fetchSherpaOnnx) }
+
 dependencies {
     implementation(project(":core"))
+    implementation(files(sherpaOnnxAar).builtBy(fetchSherpaOnnx))
     implementation(libs.kotlinx.coroutines.android)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
