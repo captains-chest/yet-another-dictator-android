@@ -22,6 +22,8 @@ All notable changes are documented here. The format follows
 - Third-party notices: OpenAI's Whisper weights are MIT licensed, not Apache 2.0.
 
 ### Added
+- Undo Last Dictation on the floating microphone (parity with Mac and iOS). Shown after a
+  successful insert while Ready; hidden after typing elsewhere or when Try again / Discard are up.
 - `scripts/build-universal-apk.sh` builds one APK for sideloading.
 - Release workflow: on a `v*` tag, a signed AAB and a signed universal APK on a GitHub release,
   and a draft upload to Play's internal track once a Play service account is configured.

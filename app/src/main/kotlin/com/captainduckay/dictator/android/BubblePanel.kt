@@ -33,12 +33,17 @@ internal class BubblePanel(context: Context, private val listener: Listener) : L
         fun onRetry()
 
         fun onDiscard()
+
+        fun onUndo()
     }
 
     private val bubble = BubbleView(context)
     private val caption: TextView
     private val message: TextView
     private val actions: LinearLayout
+    private val retry: TextView
+    private val discard: TextView
+    private val undo: TextView
 
     init {
         orientation = VERTICAL
@@ -47,8 +52,9 @@ internal class BubblePanel(context: Context, private val listener: Listener) : L
         setPadding(pad, pad, pad, pad)
         message = label()
         caption = label()
-        val retry = action(context.getString(R.string.action_try_again), listener::onRetry)
-        val discard = action(context.getString(R.string.action_discard), listener::onDiscard)
+        retry = action(context.getString(R.string.action_try_again), listener::onRetry)
+        discard = action(context.getString(R.string.action_discard), listener::onDiscard)
+        undo = action(context.getString(R.string.action_undo), listener::onUndo)
         actions =
             LinearLayout(context).apply {
                 orientation = HORIZONTAL
@@ -56,6 +62,7 @@ internal class BubblePanel(context: Context, private val listener: Listener) : L
                 visibility = GONE
                 addView(retry)
                 addView(discard)
+                addView(undo)
             }
         addView(message)
         addView(actions)
@@ -65,10 +72,10 @@ internal class BubblePanel(context: Context, private val listener: Listener) : L
         isClickable = true
         // An accessibility overlay does not show a hardware-accelerated circle. Software does.
         setLayerType(LAYER_TYPE_SOFTWARE, null)
-        render(DictationState.LoadingModel, 0f, null, showRetry = false)
+        render(DictationState.LoadingModel, 0f, null, showRetry = false, canUndo = false)
     }
 
-    fun render(state: DictationState, level: Float, error: String?, showRetry: Boolean) {
+    fun render(state: DictationState, level: Float, error: String?, showRetry: Boolean, canUndo: Boolean) {
         bubble.state = state
         bubble.level = level
         caption.text =
@@ -80,9 +87,25 @@ internal class BubblePanel(context: Context, private val listener: Listener) : L
             }
         message.text = error
         message.visibility = if (error.isNullOrBlank()) GONE else VISIBLE
-        actions.visibility = if (showRetry) VISIBLE else GONE
-        val idle = state == DictationState.Ready && error.isNullOrBlank() && !showRetry
-        caption.visibility = if (idle) GONE else VISIBLE
+        val mode = BubbleActions.mode(showRetry, canUndo, state)
+        when (mode) {
+            BubbleActions.Mode.Retry -> {
+                retry.visibility = VISIBLE
+                discard.visibility = VISIBLE
+                undo.visibility = GONE
+                actions.visibility = VISIBLE
+            }
+            BubbleActions.Mode.Undo -> {
+                retry.visibility = GONE
+                discard.visibility = GONE
+                undo.visibility = VISIBLE
+                actions.visibility = VISIBLE
+            }
+            BubbleActions.Mode.Hidden -> actions.visibility = GONE
+        }
+        // Retry keeps the ready caption; Undo is quiet like idle Ready.
+        val quiet = state == DictationState.Ready && error.isNullOrBlank() && mode != BubbleActions.Mode.Retry
+        caption.visibility = if (quiet) GONE else VISIBLE
     }
 
     private fun label() =

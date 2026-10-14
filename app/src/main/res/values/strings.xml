@@ -43,6 +43,7 @@
     <string name="mic_label">Dictate</string>
     <string name="action_try_again">Try again</string>
     <string name="action_discard">Discard</string>
+    <string name="action_undo">Undo</string>
 
     <string name="notification_channel">Dictation</string>
     <string name="notification_ready">The microphone appears in a text field</string>
