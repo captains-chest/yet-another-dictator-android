@@ -80,7 +80,8 @@ jobs:
           aab=app/build/outputs/bundle/release/app-release.aab
           base=$(unzip -l "$aab" | awk '$4 ~ /^base\// {s += $1} END {print s}')
           echo "base module: $base bytes"
-          test "$base" -lt 50000000
+          # sherpa-onnx adds ~32 MB native code per ABI (ADR 0008); still far under Play's 200 MB limit.
+          test "$base" -lt 100000000
 
       - name: Upload unsigned release AAB
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
