@@ -109,7 +109,10 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
                 ),
             )
         }
-        FieldBridge.onExternalEdit = { controller.noteOtherInput() }
+        FieldBridge.onExternalEdit = {
+            controller.noteOtherInput()
+            render()
+        }
         instance = this
         panel = BubblePanel(this, this)
         panel.addOnLayoutChangeListener { view, left, top, right, bottom, _, _, _, _ ->
@@ -201,6 +204,13 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
     }
 
     override fun onDiscard() = controller.discardUndelivered()
+
+    override fun onUndo() {
+        scope.launch {
+            controller.undoLastDictation()
+            render()
+        }
+    }
 
     private fun beginPress() {
         when (val state = controller.state.value) {
@@ -321,6 +331,7 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
             controller.level.value,
             error,
             controller.undeliveredTranscript.value != null,
+            controller.canUndo,
         )
     }
 

@@ -41,6 +41,7 @@
     <string name="mic_label">Dikter</string>
     <string name="action_try_again">Prøv igen</string>
     <string name="action_discard">Kassér</string>
+    <string name="action_undo">Fortryd</string>
 
     <string name="notification_channel">Diktering</string>
     <string name="notification_ready">Mikrofonen vises i et tekstfelt</string>
