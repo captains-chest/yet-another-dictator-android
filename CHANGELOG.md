@@ -6,6 +6,14 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- A second speech model: NVIDIA Parakeet TDT 0.6B v2, English only and the most accurate (about
+  661 MB). Whisper Small stays available, and is the one to use for Dansk.
+- On first launch Dictator asks which model to use, best first, with the size, accuracy and speed of
+  each. It downloads nothing until you choose and tap Download, and only the model you chose, still
+  over Wi-Fi unless you allow mobile data. A Whisper Small download from before stays in use without
+  asking. Switch models or delete one you no longer use under Models.
+
 ### Changed
 - Dictation is one floating microphone. It appears when a text field is focused, and it is hidden
   otherwise. Tap to start and stop, hold to talk, drag to move it. Your own keyboard stays, and

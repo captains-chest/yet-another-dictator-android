@@ -1,20 +1,25 @@
 package com.captainduckay.dictator.android
 
 import android.content.Context
+import com.captainduckay.dictator.core.ModelChoice
 import com.captainduckay.dictator.core.ModelManifest
+import com.captainduckay.dictator.core.SpeechModelId
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import java.io.File
 
 /**
- * The Whisper model, downloaded once after install with the user's consent (ADR 0006). The file list
- * and SHA-256 hashes come from `model-manifest.txt` inside the signed APK, never from the network.
- * Downloaded files live in app-private storage (`filesDir/models/<model-id>/`), excluded from backup.
+ * The speech models on disk (ADR 0006, ADR 0008). Only the model the user chose is downloaded, after
+ * they opt in. The file list and SHA-256 hashes come from `model-manifest.txt` inside the signed APK,
+ * never from the network. Files live in app-private storage (`filesDir/models/<model-id>/`), excluded
+ * from backup.
  */
 object SpeechModel {
-    const val MODEL_ID = "ggml-small-q5_1"
-    const val FILE_NAME = "ggml-small-q5_1.bin"
-    const val DISPLAY_NAME = "Whisper Small (q5_1)"
     private const val MANIFEST_ASSET = "model/model-manifest.txt"
     private const val COMPLETE_MARKER = ".complete"
+
+    /** Whisper's single ggml file. */
+    const val WHISPER_FILE_NAME = "ggml-small-q5_1.bin"
 
     fun manifest(context: Context): ModelManifest =
         ModelManifest.parse(
@@ -24,21 +29,64 @@ object SpeechModel {
                 .use { it.readText() },
         )
 
-    fun downloadBytes(context: Context): Long = manifest(context).totalBytes(MODEL_ID)
+    fun choice(context: Context) = ModelChoice(Settings(context))
 
-    fun folder(context: Context): File = File(context.filesDir, "models/$MODEL_ID")
+    /** The chosen model, or null until the user picks one. */
+    fun chosen(context: Context): SpeechModelId? = choice(context).selected
 
-    fun file(context: Context): File = File(folder(context), FILE_NAME)
+    fun displayName(model: SpeechModelId): String =
+        when (model) {
+            SpeechModelId.PARAKEET_V2 -> "NVIDIA Parakeet TDT 0.6B v2"
+            SpeechModelId.WHISPER_SMALL -> "Whisper Small (q5_1)"
+        }
+
+    fun downloadBytes(context: Context, model: SpeechModelId): Long = manifest(context).totalBytes(model.id)
+
+    fun folder(context: Context, model: SpeechModelId): File = File(context.filesDir, "models/${model.id}")
 
     /** True once every file was downloaded and verified; the worker writes the marker last. */
-    fun isInstalled(context: Context): Boolean =
-        File(folder(context), COMPLETE_MARKER).isFile && file(context).isFile
+    fun isInstalled(context: Context, model: SpeechModelId): Boolean {
+        val folder = folder(context, model)
+        return File(folder, COMPLETE_MARKER).isFile &&
+            manifest(context).files(model.id).all { File(folder, it.localPath).isFile }
+    }
 
-    internal fun markComplete(context: Context) = File(folder(context), COMPLETE_MARKER).writeText(MODEL_ID)
+    fun installed(context: Context): Set<SpeechModelId> =
+        SpeechModelId.entries
+            .filter {
+                isInstalled(
+                    context,
+                    it,
+                )
+            }.toSet()
+
+    internal fun markComplete(context: Context, model: SpeechModelId) =
+        File(folder(context, model), COMPLETE_MARKER).writeText(model.id)
+
+    /** Frees the storage of a model that isn't in use. */
+    fun delete(context: Context, model: SpeechModelId) {
+        if (model == chosen(context)) return
+        folder(context, model).deleteRecursively()
+        mutableChanges.tryEmit(Unit)
+    }
 
     /** Deletes models that are no longer in the manifest, e.g. after a model bump. */
     fun removeStale(context: Context) {
         val keep = manifest(context).modelIds.toSet()
         File(context.filesDir, "models").listFiles()?.filter { it.name !in keep }?.forEach { it.deleteRecursively() }
+    }
+
+    private val mutableChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
+
+    /** Emits when the choice changes or a model finishes downloading, so dictation reloads it. */
+    val changes: SharedFlow<Unit> = mutableChanges
+
+    fun choose(context: Context, model: SpeechModelId) {
+        choice(context).choose(model)
+        mutableChanges.tryEmit(Unit)
+    }
+
+    internal fun notifyInstalled() {
+        mutableChanges.tryEmit(Unit)
     }
 }

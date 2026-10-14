@@ -12,6 +12,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.captainduckay.dictator.core.ModelManifest
+import com.captainduckay.dictator.core.SpeechModelId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +28,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 
 /**
- * Downloads the model listed in the bundled manifest (ADR 0006). The only network code in the app.
+ * Downloads the chosen model listed in the bundled manifest (ADR 0006, ADR 0008). The only network code in the app.
  *
  * - Runs only after the user taps Download. Wi-Fi (unmetered) only unless they allowed mobile data.
  * - Resumes with an HTTP Range request from the `.part` file, so retries and restarts continue.
@@ -39,12 +40,15 @@ class ModelDownloadWorker(context: Context, params: WorkerParameters) : Coroutin
         withContext(Dispatchers.IO) {
             val context = applicationContext
             try {
+                val model =
+                    SpeechModelId.fromId(inputData.getString(KEY_MODEL))
+                        ?: return@withContext Result.failure(workDataOf(KEY_ERROR to "Unknown model"))
                 SpeechModel.removeStale(context)
-                if (SpeechModel.isInstalled(context)) return@withContext Result.success()
-                val files = SpeechModel.manifest(context).files(SpeechModel.MODEL_ID)
+                if (SpeechModel.isInstalled(context, model)) return@withContext Result.success()
+                val files = SpeechModel.manifest(context).files(model.id)
                 val total = files.sumOf { it.bytes }
                 var done = 0L
-                val folder = SpeechModel.folder(context).apply { mkdirs() }
+                val folder = SpeechModel.folder(context, model).apply { mkdirs() }
                 for (entry in files) {
                     val target = File(folder, entry.localPath)
                     if (!(target.isFile && target.length() == entry.bytes)) {
@@ -53,7 +57,8 @@ class ModelDownloadWorker(context: Context, params: WorkerParameters) : Coroutin
                     done += entry.bytes
                     setProgress(progress(done, total))
                 }
-                SpeechModel.markComplete(context)
+                SpeechModel.markComplete(context, model)
+                SpeechModel.notifyInstalled()
                 Result.success()
             } catch (e: ChecksumMismatch) {
                 if (runAttemptCount <
@@ -147,6 +152,7 @@ class ModelDownloadWorker(context: Context, params: WorkerParameters) : Coroutin
         const val KEY_DONE = "done"
         const val KEY_TOTAL = "total"
         const val KEY_ERROR = "error"
+        private const val KEY_MODEL = "model"
         private const val MAX_ATTEMPTS = 8
         private const val TIMEOUT_MS = 30_000
         private const val BUFFER = 64 * 1024
@@ -154,10 +160,12 @@ class ModelDownloadWorker(context: Context, params: WorkerParameters) : Coroutin
 
         private fun progress(done: Long, total: Long) = workDataOf(KEY_DONE to done, KEY_TOTAL to total)
 
-        /** Starts (or keeps) the download. Wi-Fi only unless [allowMobileData]. */
-        fun start(context: Context, allowMobileData: Boolean) {
+        /** Starts (or keeps) the download of [model]. Wi-Fi only unless [allowMobileData]. */
+        fun start(context: Context, model: SpeechModelId, allowMobileData: Boolean) {
             val request =
                 OneTimeWorkRequestBuilder<ModelDownloadWorker>()
+                    .setInputData(workDataOf(KEY_MODEL to model.id))
+                    .addTag(tag(model))
                     .setConstraints(
                         Constraints
                             .Builder()
@@ -169,6 +177,9 @@ class ModelDownloadWorker(context: Context, params: WorkerParameters) : Coroutin
                     .build()
             WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, request)
         }
+
+        /** Tags each request with its model, so the UI shows only the chosen model's download. */
+        fun tag(model: SpeechModelId) = "model:${model.id}"
 
         fun cancel(context: Context) = WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
 

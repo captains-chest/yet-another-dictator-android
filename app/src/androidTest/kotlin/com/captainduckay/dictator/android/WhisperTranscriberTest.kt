@@ -2,6 +2,7 @@ package com.captainduckay.dictator.android
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.captainduckay.dictator.core.SpeechModelId
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
@@ -33,7 +34,7 @@ class WhisperTranscriberTest {
 
     @Test fun transcribesEnglishOffline() =
         runBlocking {
-            assumeTrue("model not downloaded", SpeechModel.isInstalled(app))
+            assumeTrue("model not downloaded", SpeechModel.isInstalled(app, SpeechModelId.WHISPER_SMALL))
             val transcriber = WhisperTranscriber(app)
             transcriber.prepare()
             val text = transcriber.transcribe(jfk(), "en")

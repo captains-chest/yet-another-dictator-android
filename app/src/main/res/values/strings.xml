@@ -62,5 +62,23 @@
     <string name="model_waiting">Waiting for Wi-Fi (or a connection) to download the model…</string>
     <string name="model_failed">The download failed. Try again.</string>
     <string name="action_cancel">Cancel</string>
-    <string name="model_footnote">The one-time model download from Hugging Face is the only network use. Every file is checked against a SHA-256 hash built into the app. Your audio never leaves the device.</string>
+    <string name="model_footnote">Downloading the speech model you choose, from Hugging Face, is the only network use. Every file is checked against a SHA-256 hash built into the app. Your audio never leaves the device.</string>
+    <string name="section_models">Models</string>
+    <string name="language_english_only">Parakeet understands English only. Choose Whisper Small for Dansk or automatic detection.</string>
+    <string name="model_parakeet_accuracy" formatted="false">Most accurate for English (6.1% average word error rate on the Open ASR Leaderboard).</string>
+    <string name="model_whisper_accuracy">Less accurate, and the only choice for Dansk.</string>
+    <string name="model_parakeet_speed">Fast on the phone\'s CPU, without Whisper\'s 30-second windows.</string>
+    <string name="model_whisper_speed">Slower on long dictations; smaller download.</string>
+    <string name="model_recommended">%1$s (recommended)</string>
+    <string name="model_meta_english">%1$s MB download · English only</string>
+    <string name="model_meta_multilingual">%1$s MB download · Automatic, Dansk or English</string>
+    <string name="model_picker_title">Choose a speech model</string>
+    <string name="model_picker_intro">Dictator transcribes on this phone. Choose one model; only that one is downloaded, and only after you confirm. You can switch later.</string>
+    <string name="action_choose_model">Choose</string>
+    <string name="action_later">Later</string>
+    <string name="action_use_model">Use</string>
+    <string name="action_delete_model">Delete</string>
+    <string name="model_in_use">In use</string>
+    <string name="model_switch_busy">Cancel the running download to switch models.</string>
+    <string name="model_none_chosen">Choose a speech model below. Nothing is downloaded until you choose one and tap Download.</string>
 </resources>

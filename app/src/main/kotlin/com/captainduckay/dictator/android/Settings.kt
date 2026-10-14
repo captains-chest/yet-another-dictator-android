@@ -2,9 +2,10 @@ package com.captainduckay.dictator.android
 
 import android.content.Context
 import com.captainduckay.dictator.core.DictationLanguage
+import com.captainduckay.dictator.core.StringStore
 
 /** The few stored preferences. No text and no audio are ever stored. */
-class Settings(context: Context) {
+class Settings(context: Context) : StringStore {
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
     var language: DictationLanguage
@@ -14,6 +15,10 @@ class Settings(context: Context) {
     var lastSeenVersion: String?
         get() = prefs.getString(KEY_LAST_SEEN, null)
         set(value) = prefs.edit().putString(KEY_LAST_SEEN, value).apply()
+
+    override fun getString(key: String): String? = prefs.getString(key, null)
+
+    override fun putString(key: String, value: String) = prefs.edit().putString(key, value).apply()
 
     /** Where the floating button was last left, in pixels from the top left. Null until it is moved. */
     fun bubblePosition(): Pair<Int, Int>? {

@@ -1,6 +1,6 @@
 # 6. Download the model after install, with the user's consent
 
-- Status: Accepted
+- Status: Accepted; amended by [ADR 0008](0008-choose-the-speech-model.md) (which model, chosen by the user)
 - Date: 2026-10-11
 - Supersedes: [ADR 0004](0004-bundled-small-model.md)
 

@@ -60,5 +60,23 @@
     <string name="model_waiting">Venter på Wi-Fi (eller forbindelse) for at downloade modellen…</string>
     <string name="model_failed">Downloaden mislykkedes. Prøv igen.</string>
     <string name="action_cancel">Annuller</string>
-    <string name="model_footnote">Den ene download af modellen fra Hugging Face er appens eneste brug af netværket. Hver fil kontrolleres mod en SHA-256-hash, der er indbygget i appen. Din lyd forlader aldrig enheden.</string>
+    <string name="model_footnote">Download af den talemodel, du vælger, fra Hugging Face er appens eneste brug af netværket. Hver fil kontrolleres mod en SHA-256-hash, der er indbygget i appen. Din lyd forlader aldrig enheden.</string>
+    <string name="section_models">Modeller</string>
+    <string name="language_english_only">Parakeet forstår kun engelsk. Vælg Whisper Small til dansk eller automatisk genkendelse.</string>
+    <string name="model_parakeet_accuracy" formatted="false">Mest præcis på engelsk (6,1 % gennemsnitlig ordfejlrate på Open ASR Leaderboard).</string>
+    <string name="model_whisper_accuracy">Mindre præcis, og det eneste valg til dansk.</string>
+    <string name="model_parakeet_speed">Hurtig på telefonens CPU, uden Whispers 30-sekunders vinduer.</string>
+    <string name="model_whisper_speed">Langsommere ved lange dikteringer; mindre download.</string>
+    <string name="model_recommended">%1$s (anbefalet)</string>
+    <string name="model_meta_english">%1$s MB download · kun engelsk</string>
+    <string name="model_meta_multilingual">%1$s MB download · automatisk, dansk eller engelsk</string>
+    <string name="model_picker_title">Vælg en talemodel</string>
+    <string name="model_picker_intro">Dictator transskriberer på telefonen. Vælg én model; kun den downloades, og først når du bekræfter. Du kan skifte senere.</string>
+    <string name="action_choose_model">Vælg</string>
+    <string name="action_later">Senere</string>
+    <string name="action_use_model">Brug</string>
+    <string name="action_delete_model">Slet</string>
+    <string name="model_in_use">I brug</string>
+    <string name="model_switch_busy">Annuller den igangværende download for at skifte model.</string>
+    <string name="model_none_chosen">Vælg en talemodel nedenfor. Intet downloades, før du har valgt en og trykket Download.</string>
 </resources>
