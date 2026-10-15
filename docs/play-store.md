@@ -50,7 +50,7 @@ Withdrawn 2026-10-15: Dictator is English-only. Do not publish a da-DK listing.
 
 - App icon 512 × 512 PNG (from the iOS/macOS icon).
 - Feature graphic 1024 × 500.
-- At least 2 phone screenshots (setup screen, the floating button over a text field), ideally EN and DA.
+- At least 2 phone screenshots (setup screen, the floating button over a text field), in English.
 
 ## Data safety
 
