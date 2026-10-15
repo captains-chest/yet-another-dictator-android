@@ -23,7 +23,8 @@ import kotlin.math.sin
  * the same bounds, so the window never grows, shrinks or moves when the state changes. A small
  * badge slot in the top-right corner is reserved for Undo, or Discard when a dictation could not be
  * typed; a tap on the badge runs that action, a tap anywhere else is the microphone (or Try again).
- * The window itself is not focusable.
+ * The window itself is not focusable. The status plank beside it is a separate window
+ * ([BubblePaneView]), so this one never changes.
  */
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 internal class BubblePanel(context: Context, private val listener: Listener) : View(context) {
@@ -48,6 +49,9 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
     private var error: String? = null
     private var mode = BubbleActions.Mode.Hidden
     private var shakeStartedAt = 0L
+
+    /** "Typed N words" while the plank beside the button offers Undo; the badge then stays hidden. */
+    private var paneUndo: String? = null
 
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val outline =
@@ -76,7 +80,7 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
         // An accessibility overlay does not show a hardware-accelerated circle. Software does.
         setLayerType(LAYER_TYPE_SOFTWARE, null)
-        render(DictationState.LoadingModel, 0f, null, showRetry = false, canUndo = false)
+        render(DictationState.LoadingModel, 0f, null, showRetry = false, canUndo = false, paneUndo = null)
     }
 
     /** Fixed size in every state: the window never changes size, so the button never moves. */
@@ -85,7 +89,14 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
         setMeasuredDimension(size, size)
     }
 
-    fun render(state: DictationState, level: Float, error: String?, showRetry: Boolean, canUndo: Boolean) {
+    fun render(
+        state: DictationState,
+        level: Float,
+        error: String?,
+        showRetry: Boolean,
+        canUndo: Boolean,
+        paneUndo: String?,
+    ) {
         // A model that failed to load reports through the state, not through the error.
         val newError =
             error?.takeIf { it.isNotBlank() }
@@ -98,6 +109,7 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
         this.level = level.coerceIn(0f, 1f)
         this.error = newError
         mode = BubbleActions.mode(showRetry, canUndo, state)
+        this.paneUndo = paneUndo
         contentDescription = describe()
         invalidate()
     }
@@ -111,7 +123,7 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
                 state == DictationState.LoadingModel -> context.getString(R.string.mic_label_loading)
                 else -> context.getString(R.string.mic_label)
             }
-        return listOfNotNull(error, main).joinToString(". ")
+        return listOfNotNull(error, paneUndo, main).joinToString(". ")
     }
 
     override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
@@ -274,7 +286,7 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
 
     /** The reserved top-right slot. It is drawn only when there is an action, but never moves anything. */
     private fun drawBadge(canvas: Canvas, size: Float) {
-        if (mode == BubbleActions.Mode.Hidden) return
+        if (badgeHidden()) return
         val r = pxf(BADGE_DP) / 2f
         val bx = size - r
         val by = r
@@ -297,8 +309,11 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
         }
     }
 
+    private fun badgeHidden() =
+        mode == BubbleActions.Mode.Hidden || (mode == BubbleActions.Mode.Undo && paneUndo != null)
+
     private fun inBadge(x: Float, y: Float): Boolean {
-        if (mode == BubbleActions.Mode.Hidden) return false
+        if (badgeHidden()) return false
         val slot = pxf(BADGE_DP) + pxf(4)
         return x >= width - slot && y <= slot
     }

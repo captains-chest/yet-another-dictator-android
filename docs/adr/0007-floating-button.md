@@ -2,6 +2,8 @@
 
 - Status: Accepted
 - Note (2026-10-15): the button's look (logo, colours, cookie shape) is now [ADR 0009](0009-captains-chest-look.md).
+- Amended (2026-10-15): a status pane may open beside the button during a dictation; the button
+  itself still never moves. See "The pane" below.
 - Date: 2026-10-11
 - Supersedes: the interaction in [ADR 0001](0001-capture-in-the-keyboard.md)
 
@@ -17,7 +19,9 @@ The pipeline itself (record, transcribe on device, type, no clipboard, nothing s
 
 ## Decision
 
-- Dictation is a **floating microphone**. Tap toggles, hold talks, drag moves it. The window is an
+- Dictation is a **floating microphone**. Tap toggles, hold talks, drag moves it. A hold starts
+  recording only after the finger has rested half a second; moving before then drags the button
+  instead. The window is an
   accessibility overlay, added by the accessibility service, so a press reaches the button and the
   button stays up after leaving Dictator. A plain draw-over window did neither. It is not an input
   method, and the app no longer ships one.
@@ -36,9 +40,17 @@ The pipeline itself (record, transcribe on device, type, no clipboard, nothing s
   an error turns it amber with a warning mark and a short shake inside the ring margin. Undo, and
   Discard for a dictation that could not be typed, sit in a reserved badge slot in the top-right
   corner of the same bounds; a tap on the badge runs it, a tap elsewhere is the microphone (or Try
-  again). Nothing appears beside the button, so it never moves. Screen readers get a
+  again). Screen readers get a
   content description per state, errors are announced, and the badge action is a custom
   accessibility action.
+- **The pane.** During a dictation a wooden plank opens beside the button, toward the middle of the
+  screen (left when the button is in the right half): level bars and a timer while listening,
+  "Writing" while transcribing, then "Typed N words · Undo" for four seconds, after which Undo
+  returns to the badge. The pane is a second overlay window (`BubblePaneView`), so the button's
+  window never changes size or position and a finger on it is never moved. The plank slides out
+  from behind the button and back. That window lets touches through, except on Undo while it
+  shows; only the button records. The pane is not a control in its own right for screen readers;
+  the button's description includes "Typed N words" and Undo stays a custom action.
 - The user's keyboard stays. Text is inserted by an **accessibility service** that reads only the
   focused editable, in memory, to place the words and to space them (`FieldEdit`, then
   `ACTION_SET_TEXT`). The clipboard is still never used.

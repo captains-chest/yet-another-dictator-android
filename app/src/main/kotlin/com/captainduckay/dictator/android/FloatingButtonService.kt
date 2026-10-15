@@ -52,6 +52,10 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
     private var foregroundStarted = false
     private var callbacksRegistered = false
     private var bubbleRequested = false
+    private lateinit var pane: BubblePaneView
+    private lateinit var paneParams: WindowManager.LayoutParams
+    private var paneRequested = false
+    private var rendering = false
     private var inputFocused = false
     private var laidOutWidth = -1
     private var laidOutHeight = -1
@@ -68,6 +72,7 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
                 if (!::panel.isInitialized || !panel.isAttachedToWindow) return
                 clamp()
                 DictatorAccessibilityService.updateBubble(panel, params)
+                placePane()
             }
 
             override fun onLowMemory() = Unit
@@ -116,6 +121,19 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
         }
         instance = this
         panel = BubblePanel(this, this)
+        pane =
+            BubblePaneView(
+                this,
+                object : BubblePaneView.Listener {
+                    override fun onUndo() = this@FloatingButtonService.onUndo()
+
+                    override fun onPaneChanged() {
+                        if (!rendering) render()
+                        placePane()
+                    }
+                },
+            )
+        paneParams = paneOverlayParams()
         panel.addOnLayoutChangeListener { view, left, top, right, bottom, _, _, _, _ ->
             val width = right - left
             val height = bottom - top
@@ -174,6 +192,10 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
         handler.removeCallbacks(hideWhenFieldGone)
         if (callbacksRegistered) unregisterComponentCallbacks(configuration)
         DictatorAccessibilityService.clearWhenConnected()
+        if (paneRequested) {
+            DictatorAccessibilityService.removePane()
+            paneRequested = false
+        }
         if (bubbleRequested) {
             DictatorAccessibilityService.removeBubble()
             bubbleRequested = false
@@ -205,6 +227,7 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
         params.y += dy
         clamp()
         DictatorAccessibilityService.updateBubble(panel, params)
+        placePane()
         settings.saveBubblePosition(params.x, params.y)
     }
 
@@ -244,6 +267,7 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
 
     private fun reattachAfterAccessibility() {
         bubbleRequested = false
+        paneRequested = false
         laidOutWidth = -1
         laidOutHeight = -1
         DictatorAccessibilityService.runWhenConnected {
@@ -274,6 +298,7 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
     private fun syncBubble() {
         if (!::panel.isInitialized) return
         if (wantsBubble()) showBubble() else hideBubble()
+        placePane()
     }
 
     private fun hideBubble() {
@@ -325,6 +350,48 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
         return params
     }
 
+    /** The plank's window: it never takes focus, and takes touches only while it offers Undo. */
+    private fun paneOverlayParams(): WindowManager.LayoutParams {
+        val params =
+            WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                dp(BubblePanel.SIZE_DP),
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                PANE_FLAGS or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                PixelFormat.TRANSLUCENT,
+            )
+        params.gravity = Gravity.TOP or Gravity.START
+        params.fitInsetsTypes = 0
+        return params
+    }
+
+    /**
+     * Puts the plank's window beside the button, on the side toward the middle of the screen, or
+     * takes it away. The button's own window is never touched here.
+     */
+    private fun placePane() {
+        if (!::pane.isInitialized) return
+        if (!bubbleRequested || !pane.wantsWindow) {
+            if (paneRequested) DictatorAccessibilityService.removePane()
+            paneRequested = false
+            return
+        }
+        val bounds = windowManager.currentWindowMetrics.bounds
+        // Keep the side while the plank is out, so it never jumps across the button mid-dictation.
+        if (!paneRequested) pane.onLeft = BubblePane.onLeft(params.x, dp(BubblePanel.SIZE_DP), bounds.width())
+        pane.requestLayout()
+        paneParams.width = pane.windowWidth()
+        paneParams.x = params.x + pane.windowOffset()
+        paneParams.y = params.y
+        paneParams.flags =
+            PANE_FLAGS or if (pane.touchable) 0 else WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        if (paneRequested) {
+            DictatorAccessibilityService.updatePane(pane, paneParams)
+        } else {
+            paneRequested = DictatorAccessibilityService.showPane(pane, paneParams)
+        }
+    }
+
     private fun clamp() {
         val bounds = windowManager.currentWindowMetrics.bounds
         val width = panel.width.takeIf { it > 0 } ?: dp(BubblePanel.SIZE_DP)
@@ -335,14 +402,20 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
 
     private fun render() {
         if (!::panel.isInitialized) return
+        val state = controller.state.value
         val error = localMessage ?: controller.lastError.value
-        panel.render(
-            controller.state.value,
+        val showRetry = controller.undeliveredTranscript.value != null
+        val canUndo = controller.canUndo
+        rendering = true
+        pane.render(
+            state,
             controller.level.value,
-            error,
-            controller.undeliveredTranscript.value != null,
-            controller.canUndo,
+            problem = !error.isNullOrBlank() || state is DictationState.Unavailable,
+            mode = BubbleActions.mode(showRetry, canUndo, state),
+            typed = controller.lastTyped,
         )
+        rendering = false
+        panel.render(state, controller.level.value, error, showRetry, canUndo, pane.undoLabel)
     }
 
     private fun hasMicrophone() =
@@ -430,6 +503,13 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
     companion object {
         const val ACTION_STOP = "com.captainduckay.dictator.android.HIDE_BUTTON"
         private const val CHANNEL_ID = "dictation"
+
+        // The plank may reach off a narrow screen rather than be pushed over the button.
+        private const val PANE_FLAGS =
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         private const val NOTIFICATION_ID = 1001
         private const val TAG = "Dictator"
 

@@ -129,6 +129,9 @@ class DictationController(
     /** Whether the last dictation can still be undone. */
     val canUndo: Boolean get() = state.value == DictationState.Ready && history.lastInserted != null
 
+    /** What the last dictation typed, while it can still be undone. */
+    val lastTyped: String? get() = history.lastInserted
+
     private fun setState(value: DictationState) {
         mutableState.value = value
     }

@@ -1,13 +1,14 @@
 package com.captainduckay.dictator.android
 
 /**
- * Decides what a finger did on the floating microphone. A small pause separates a drag from a
- * press, so moving the button does not open the microphone. The hold threshold matches
+ * Decides what a finger did on the floating microphone. A finger must rest for [DRAG_DECISION_MS]
+ * before a hold starts recording; one that moves before then is dragging the button, so moving it
+ * never opens the microphone. A quick tap still toggles. The hold threshold matches
  * [com.captainduckay.dictator.core.DictationController]'s default: a press that starts a little
  * late still has to count as a hold when the finger was down long enough.
  */
 internal object BubbleGesture {
-    const val DRAG_DECISION_MS = 80L
+    const val DRAG_DECISION_MS = 500L
     const val HOLD_MS = 350L
 
     sealed interface Release {
