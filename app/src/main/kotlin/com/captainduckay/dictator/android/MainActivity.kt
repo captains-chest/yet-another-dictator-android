@@ -14,52 +14,66 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.work.WorkInfo
 import com.captainduckay.dictator.core.AppVersion
 import com.captainduckay.dictator.core.Changelog
-import com.captainduckay.dictator.core.DictationLanguage
 import com.captainduckay.dictator.core.ModelStartup
 import com.captainduckay.dictator.core.SpeechModelId
 import com.captainduckay.dictator.core.WhatsNew
@@ -67,7 +81,7 @@ import java.util.Locale
 import android.provider.Settings as AndroidSettings
 
 /**
- * Setup only: microphone, the floating button, language and the model, plus a field to try it.
+ * Setup only: microphone, typing, the floating button and the model, plus a field to try it.
  * Dictation itself runs in [FloatingButtonService] (ADR 0007).
  */
 class MainActivity : ComponentActivity() {
@@ -76,7 +90,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val settings = Settings(this)
         val whatsNew = whatsNewDecision(settings)
-        setContent { DictatorTheme { RootScreen(settings, whatsNew) } }
+        setContent { DictatorTheme { RootScreen(whatsNew) } }
     }
 
     private fun whatsNewDecision(settings: Settings): WhatsNew.Decision {
@@ -141,14 +155,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
+private fun RootScreen(initialWhatsNew: WhatsNew.Decision) {
     val activity = LocalActivity.current as MainActivity
     var microphone by remember { mutableStateOf(activity.hasMicrophone()) }
     var typing by remember { mutableStateOf(activity.isTypingEnabled()) }
     val buttonOn by FloatingButtonService.running.collectAsState()
-    var language by remember { mutableStateOf(settings.language) }
     var whatsNew by remember { mutableStateOf(initialWhatsNew) }
     var showNotices by remember { mutableStateOf(false) }
     var askedOnce by remember { mutableStateOf(false) }
@@ -176,112 +188,105 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
             activity.showButton()
         }
     }
+    // After a permanent "Don't allow", only the app's settings screen can grant the microphone.
+    val micBlocked =
+        !microphone && askedOnce && !activity.shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)
     // Settings can change while we're away (permission, accessibility): re-check on return.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         microphone = activity.hasMicrophone()
         typing = activity.isTypingEnabled()
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) }) { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            Section(stringResource(R.string.section_microphone)) {
-                if (microphone) {
-                    Text(stringResource(R.string.microphone_allowed))
-                } else if (askedOnce &&
-                    !activity.shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)
-                ) {
-                    Button(onClick = activity::openAppSettings) { Text(stringResource(R.string.action_open_settings)) }
-                } else {
-                    Button(onClick = { permission.launch(Manifest.permission.RECORD_AUDIO) }) {
-                        Text(stringResource(R.string.action_allow_microphone))
-                    }
-                }
-                Footnote(stringResource(R.string.microphone_footnote))
-            }
-            Section(stringResource(R.string.section_button)) {
-                when {
-                    !typing -> {
-                        Text(stringResource(R.string.typing_needed))
-                        Footnote(stringResource(R.string.restricted_settings_hint))
-                        Button(onClick = activity::openTypingSettings) {
-                            Text(stringResource(R.string.action_allow_typing))
-                        }
-                        if (buttonOn) {
-                            OutlinedButton(onClick = activity::hideButton) {
-                                Text(stringResource(R.string.action_hide_button))
-                            }
-                        } else {
-                            OutlinedButton(onClick = showButton) { Text(stringResource(R.string.action_show_button)) }
-                        }
-                    }
-                    else -> {
-                        Text(stringResource(R.string.button_ready))
-                        if (buttonOn) {
-                            OutlinedButton(onClick = activity::hideButton) {
-                                Text(stringResource(R.string.action_hide_button))
-                            }
-                        } else {
-                            Button(onClick = showButton) { Text(stringResource(R.string.action_show_button)) }
-                        }
-                    }
-                }
-                Footnote(stringResource(R.string.button_footnote))
-                Footnote(stringResource(R.string.shortcut_hint))
-            }
-            Section(stringResource(R.string.section_language)) {
-                if (chosenModel?.englishOnly == true) Footnote(stringResource(R.string.language_english_only))
-                Column(Modifier.selectableGroup()) {
-                    DictationLanguage.entries.forEach { option ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .selectable(selected = language == option, role = Role.RadioButton, onClick = {
-                                    language = option
-                                    settings.language = option
-                                })
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(selected = language == option, onClick = null)
-                            Text(
-                                if (option ==
-                                    DictationLanguage.AUTOMATIC
-                                ) {
-                                    stringResource(R.string.language_automatic)
-                                } else {
-                                    option.displayName
+    Column(
+        Modifier
+            .fillMaxSize()
+            .sea()
+            // Insets outside the scroll, so the boards never slide under the status bar or keyboard.
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
+        HeaderPlank(stringResource(R.string.app_name), Modifier.fillMaxWidth().semantics { heading() })
+
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            BoardCard(
+                stringResource(R.string.section_ready),
+                Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(top = 14.dp, bottom = 4.dp),
+                titleInset = 16.dp,
+            ) {
+                Column {
+                    SetupRow(
+                        icon = R.drawable.ic_mic,
+                        title = stringResource(R.string.setup_microphone),
+                        detail =
+                            stringResource(
+                                when {
+                                    microphone -> R.string.setup_microphone_on
+                                    micBlocked -> R.string.setup_microphone_blocked
+                                    else -> R.string.setup_microphone_off
                                 },
-                                Modifier.padding(start = 12.dp),
-                            )
-                        }
-                    }
+                            ),
+                        checked = microphone,
+                        onClick = {
+                            if (microphone || micBlocked) {
+                                activity.openAppSettings()
+                            } else {
+                                permission.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                        },
+                    )
+                    SetupRow(
+                        icon = R.drawable.ic_keyboard,
+                        title = stringResource(R.string.setup_typing),
+                        detail = stringResource(if (typing) R.string.setup_typing_on else R.string.setup_typing_off),
+                        checked = typing,
+                        onClick = activity::openTypingSettings,
+                        divider = true,
+                        tilt = -6f,
+                    )
+                    SetupRow(
+                        icon = R.drawable.ic_sparkle,
+                        title = stringResource(R.string.setup_button),
+                        detail = stringResource(if (buttonOn) R.string.setup_button_on else R.string.setup_button_off),
+                        checked = buttonOn,
+                        onClick = { if (buttonOn) activity.hideButton() else showButton() },
+                        divider = true,
+                        tilt = 6f,
+                    )
                 }
             }
-            Section(stringResource(R.string.section_model)) { ModelSection(chosenModel) }
-            Section(stringResource(R.string.section_models)) { ModelList(chosenModel, chooseModel) }
-            Section(stringResource(R.string.section_try)) {
-                var text by remember { mutableStateOf("") }
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                    placeholder = { Text(stringResource(R.string.try_placeholder)) },
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                )
+            if (!typing) {
+                Note(stringResource(R.string.typing_needed))
+                Note(stringResource(R.string.restricted_settings_hint))
+            } else {
+                Note(stringResource(R.string.button_ready))
+                Note(stringResource(R.string.shortcut_hint))
             }
-            Section(stringResource(R.string.section_about)) {
-                Text(stringResource(R.string.about_version, BuildConfig.VERSION_NAME))
-                Footnote(stringResource(R.string.about_privacy))
-                TextButton(onClick = { showNotices = true }) { Text(stringResource(R.string.action_notices)) }
-            }
+        }
+
+        BoardCard(
+            stringResource(R.string.section_model),
+            Modifier.fillMaxWidth(),
+            rivets = Rivets.Corners,
+            decorated = true,
+            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 14.dp),
+            titleInset = 14.dp,
+        ) { ModelCard(chosenModel, chooseModel) }
+
+        TryIt()
+
+        BoardCard(stringResource(R.string.section_about), Modifier.fillMaxWidth()) {
+            Text(
+                stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+                style = MaterialTheme.typography.titleSmall,
+                color = Chest.CreamBright,
+            )
+            Footnote(stringResource(R.string.about_privacy))
+            Footnote(stringResource(R.string.microphone_footnote))
+            Footnote(stringResource(R.string.button_footnote))
+            ChestButton(stringResource(R.string.action_notices), { showNotices = true }, primary = false)
         }
     }
 
@@ -314,6 +319,114 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
     }
 }
 
+/** One setup step: a coin icon, what it is, and a switch showing whether it is done. */
+@Composable
+private fun SetupRow(
+    @DrawableRes icon: Int,
+    title: String,
+    detail: String,
+    checked: Boolean,
+    onClick: () -> Unit,
+    divider: Boolean = false,
+    tilt: Float = 0f,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .then(
+                if (divider) {
+                    Modifier.drawBehind {
+                        val line = 1.dp.toPx()
+                        drawRect(Color.Black.copy(alpha = 0.35f), size = Size(size.width, line))
+                        drawRect(
+                            Chest.Rivet.copy(alpha = 0.08f),
+                            topLeft = Offset(0f, line),
+                            size = Size(size.width, line),
+                        )
+                    }
+                } else {
+                    Modifier
+                },
+            ).toggleable(value = checked, role = Role.Switch, onValueChange = { onClick() })
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Coin(icon, tilt = tilt)
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, color = Chest.CreamBright)
+            Text(detail, style = MaterialTheme.typography.bodySmall, color = Chest.Muted)
+        }
+        ChestSwitch(checked)
+    }
+}
+
+/** The field to try the floating microphone in, on parchment. */
+@Composable
+private fun TryIt() {
+    var text by remember { mutableStateOf("") }
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .wood(Wood.Board)
+            .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(
+            stringResource(R.string.try_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = Chest.CreamBright,
+            modifier = Modifier.semantics { heading() },
+        )
+        BasicTextField(
+            value = text,
+            onValueChange = { text = it },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 3,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = Chest.ParchmentInk),
+            cursorBrush = SolidColor(Chest.Brown),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            decorationBox = { field ->
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .drawBehind {
+                            val r = CornerRadius(9.dp.toPx())
+                            drawRoundRect(
+                                Brush.verticalGradient(listOf(Chest.Parchment, Chest.ParchmentDark)),
+                                cornerRadius = r,
+                            )
+                            drawRoundRect(
+                                Brush.verticalGradient(
+                                    listOf(Color.Black.copy(alpha = 0.18f), Color.Transparent),
+                                    endY = 6.dp.toPx(),
+                                ),
+                                cornerRadius = r,
+                            )
+                            val ink = 2.dp.toPx()
+                            drawRoundRect(
+                                Chest.Ink,
+                                topLeft = Offset(ink / 2, ink / 2),
+                                size = Size(size.width - ink, size.height - ink),
+                                cornerRadius = r,
+                                style = Stroke(ink),
+                            )
+                        }.padding(horizontal = 14.dp, vertical = 12.dp),
+                ) {
+                    if (text.isEmpty()) {
+                        Text(
+                            stringResource(R.string.try_placeholder),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Chest.ParchmentHint,
+                        )
+                    }
+                    field()
+                }
+            },
+        )
+    }
+}
+
 /** The model at launch: the saved choice, or a verified Whisper download from before the picker. */
 private fun startupModel(context: android.content.Context): SpeechModelId? =
     when (val start = ModelStartup.decide(SpeechModel.chosen(context), SpeechModel.installed(context))) {
@@ -329,6 +442,22 @@ private fun startupModel(context: android.content.Context): SpeechModelId? =
     }
 
 private fun megabytes(bytes: Long) = String.format(Locale.ROOT, "%.0f", bytes / 1_000_000.0)
+
+/** The card's short name; the full one is in the picker and the download text. */
+private fun shortName(model: SpeechModelId) =
+    when (model) {
+        SpeechModelId.PARAKEET_V2 -> "Parakeet"
+        SpeechModelId.WHISPER_SMALL -> "Whisper Small"
+    }
+
+@Composable
+private fun shortNote(model: SpeechModelId) =
+    stringResource(
+        when (model) {
+            SpeechModelId.PARAKEET_V2 -> R.string.model_parakeet_note
+            SpeechModelId.WHISPER_SMALL -> R.string.model_whisper_note
+        },
+    )
 
 @Composable
 private fun accuracyNote(model: SpeechModelId) =
@@ -348,7 +477,7 @@ private fun speedNote(model: SpeechModelId) =
         },
     )
 
-/** One model's name, size, languages, accuracy and speed. Used by the picker and the list. */
+/** One model's name, size, accuracy and speed, for the first-launch picker. */
 @Composable
 private fun ModelSummary(model: SpeechModelId, recommended: Boolean) {
     val context = LocalContext.current
@@ -361,13 +490,9 @@ private fun ModelSummary(model: SpeechModelId, recommended: Boolean) {
                 SpeechModel.displayName(model)
             },
             style = MaterialTheme.typography.titleSmall,
+            color = Chest.CreamBright,
         )
-        Footnote(
-            stringResource(
-                if (model.englishOnly) R.string.model_meta_english else R.string.model_meta_multilingual,
-                size,
-            ),
-        )
+        Footnote(stringResource(R.string.model_meta_english, size))
         Text(accuracyNote(model), style = MaterialTheme.typography.bodyMedium)
         Footnote(speedNote(model))
     }
@@ -375,7 +500,7 @@ private fun ModelSummary(model: SpeechModelId, recommended: Boolean) {
 
 /**
  * Shown at launch only while no model is chosen. Lists the models best first. Choosing one downloads
- * nothing: the Model section then asks, with the usual Wi-Fi / mobile data choice.
+ * nothing: the model card then asks, with the usual Wi-Fi / mobile data choice.
  */
 @Composable
 private fun ModelPickerDialog(onChoose: (SpeechModelId) -> Unit, onDismiss: () -> Unit) {
@@ -400,7 +525,7 @@ private fun ModelPickerDialog(onChoose: (SpeechModelId) -> Unit, onDismiss: () -
                             }),
                         verticalAlignment = Alignment.Top,
                     ) {
-                        RadioButton(selected = selected == model, onClick = null)
+                        ChestRadio(selected == model)
                         Column(Modifier.padding(start = 12.dp)) { ModelSummary(model, recommended = index == 0) }
                     }
                 }
@@ -409,39 +534,108 @@ private fun ModelPickerDialog(onChoose: (SpeechModelId) -> Unit, onDismiss: () -
         confirmButton = {
             TextButton(onClick = { onChoose(selected) }) { Text(stringResource(R.string.action_choose_model)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_later)) } },
+        dismissButton = { TextButton(onClick = { onDismiss() }) { Text(stringResource(R.string.action_later)) } },
     )
 }
 
-/** Switch to another model (download on demand, same opt-in) or delete one that isn't in use. */
+/**
+ * The speech model card: pick a model (download on demand, same opt-in), see its download, and delete
+ * one that isn't in use.
+ */
 @Composable
-private fun ModelList(chosen: SpeechModelId?, onChoose: (SpeechModelId) -> Unit) {
+private fun ModelCard(chosen: SpeechModelId?, onChoose: (SpeechModelId) -> Unit) {
     val context = LocalContext.current
     val work by remember { ModelDownloadWorker.observe(context) }.collectAsState(initial = emptyList())
     val busy = work.any { !it.state.isFinished }
-    var revision by remember { mutableStateOf(0) }
-    SpeechModelId.ranked.forEachIndexed { index, model ->
-        val installed = remember(revision, work) { SpeechModel.isInstalled(context, model) }
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            ModelSummary(model, recommended = index == 0)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (model == chosen) {
-                    Footnote(stringResource(R.string.model_in_use))
-                } else {
-                    OutlinedButton(onClick = { onChoose(model) }, enabled = !busy) {
-                        Text(stringResource(if (installed) R.string.action_use_model else R.string.action_choose_model))
-                    }
-                    if (installed) {
-                        OutlinedButton(onClick = {
-                            SpeechModel.delete(context, model)
-                            revision++
-                        }) { Text(stringResource(R.string.action_delete_model)) }
-                    }
-                }
-            }
+    var revision by remember { mutableIntStateOf(0) }
+    Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        SpeechModelId.ranked.forEach { model ->
+            ModelOption(
+                model,
+                selected = model == chosen,
+                enabled = model == chosen || !busy,
+                onClick = { if (model != chosen) onChoose(model) },
+            )
         }
     }
-    if (busy) Footnote(stringResource(R.string.model_switch_busy))
+    Column(Modifier.padding(horizontal = 6.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        ModelDownload(chosen)
+        if (busy) Footnote(stringResource(R.string.model_switch_busy))
+        val installed =
+            remember(revision, work) { SpeechModelId.ranked.filter { SpeechModel.isInstalled(context, it) } }
+        installed
+            .filter { it != chosen }
+            .forEach { model ->
+                ChestButton(
+                    stringResource(R.string.action_delete_named, shortName(model)),
+                    {
+                        SpeechModel.delete(context, model)
+                        revision++
+                    },
+                    primary = false,
+                )
+            }
+        Footnote(stringResource(R.string.model_footnote))
+    }
+}
+
+@Composable
+private fun ModelOption(model: SpeechModelId, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val megs = remember(model) { megabytes(SpeechModel.downloadBytes(context, model)) }
+    val shape = RoundedCornerShape(10.dp)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .then(
+                if (selected) {
+                    Modifier.drawBehind {
+                        val r = CornerRadius(10.dp.toPx())
+                        drawRoundRect(Color.Black.copy(alpha = 0.28f), cornerRadius = r)
+                        drawRoundRect(
+                            Brush.verticalGradient(
+                                listOf(Color.Black.copy(alpha = 0.35f), Color.Transparent),
+                                endY = 8.dp.toPx(),
+                            ),
+                            cornerRadius = r,
+                        )
+                        val line = 2.dp.toPx()
+                        drawRoundRect(
+                            Chest.Rivet.copy(alpha = 0.25f),
+                            topLeft = Offset(line / 2, line / 2),
+                            size = Size(size.width - line, size.height - line),
+                            cornerRadius = r,
+                            style = Stroke(line),
+                        )
+                    }
+                } else {
+                    Modifier
+                },
+            ).clip(shape)
+            .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        ChestRadio(selected)
+        Column(Modifier.weight(1f)) {
+            Text(
+                shortName(model),
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp),
+                color = Chest.CreamBright,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(shortNote(model), style = MaterialTheme.typography.bodySmall, color = Chest.Muted, maxLines = 1)
+        }
+        // A fixed column, so "In use" and the sizes line up on the right whatever their length.
+        Box(Modifier.width(78.dp), contentAlignment = Alignment.CenterEnd) {
+            Pill(
+                if (selected) stringResource(R.string.model_in_use) else stringResource(R.string.model_size, megs),
+                on = selected,
+            )
+        }
+    }
 }
 
 /**
@@ -449,10 +643,9 @@ private fun ModelList(chosen: SpeechModelId?, onChoose: (SpeechModelId) -> Unit)
  * Wi-Fi, and only uses mobile data when the user ticks the box. Nothing downloads until they tap.
  */
 @Composable
-private fun ModelSection(chosen: SpeechModelId?) {
+private fun ModelDownload(chosen: SpeechModelId?) {
     if (chosen == null) {
-        Text(stringResource(R.string.model_none_chosen))
-        Footnote(stringResource(R.string.model_footnote))
+        Body(stringResource(R.string.model_none_chosen))
         return
     }
     val context = LocalContext.current
@@ -464,22 +657,29 @@ private fun ModelSection(chosen: SpeechModelId?) {
     val installed = SpeechModel.isInstalled(context, chosen) || info?.state == WorkInfo.State.SUCCEEDED
 
     when {
-        installed -> Text(stringResource(R.string.model_installed, name))
+        installed -> Body(stringResource(R.string.model_installed, name))
         info != null && !info.state.isFinished -> {
             val done = info.progress.getLong(ModelDownloadWorker.KEY_DONE, 0)
             val total = info.progress.getLong(ModelDownloadWorker.KEY_TOTAL, 0)
             if (info.state == WorkInfo.State.RUNNING && total > 0) {
-                LinearProgressIndicator(progress = { done.toFloat() / total }, modifier = Modifier.fillMaxWidth())
-                Text(stringResource(R.string.model_progress, done / 1_000_000, total / 1_000_000))
+                LinearProgressIndicator(
+                    progress = { done.toFloat() / total },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Chest.Gold,
+                    trackColor = Chest.SlateDark,
+                )
+                Body(stringResource(R.string.model_progress, done / 1_000_000, total / 1_000_000))
             } else {
-                Text(stringResource(R.string.model_waiting))
+                Body(stringResource(R.string.model_waiting))
             }
-            OutlinedButton(
-                onClick = { ModelDownloadWorker.cancel(context) },
-            ) { Text(stringResource(R.string.action_cancel)) }
+            ChestButton(
+                stringResource(R.string.action_cancel),
+                { ModelDownloadWorker.cancel(context) },
+                primary = false,
+            )
         }
         else -> {
-            Text(stringResource(R.string.model_offer, name, sizeMb))
+            Body(stringResource(R.string.model_offer, name, sizeMb))
             if (info?.state == WorkInfo.State.FAILED) {
                 Text(stringResource(R.string.model_failed), color = MaterialTheme.colorScheme.error)
             }
@@ -492,32 +692,35 @@ private fun ModelSection(chosen: SpeechModelId?) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(checked = allowMobileData, onCheckedChange = null)
-                Text(stringResource(R.string.model_allow_mobile), Modifier.padding(start = 12.dp))
+                Body(stringResource(R.string.model_allow_mobile), Modifier.padding(start = 12.dp))
             }
-            Button(onClick = { ModelDownloadWorker.start(context, chosen, allowMobileData) }) {
-                Text(stringResource(R.string.action_download_model, sizeMb))
-            }
+            ChestButton(
+                stringResource(R.string.action_download_model, sizeMb),
+                { ModelDownloadWorker.start(context, chosen, allowMobileData) },
+            )
         }
     }
-    Footnote(stringResource(R.string.model_footnote))
 }
 
 @Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.semantics { heading() },
-        )
-        content()
-    }
+private fun Body(text: String, modifier: Modifier = Modifier) {
+    Text(text, modifier, style = MaterialTheme.typography.bodyMedium, color = Chest.Cream)
 }
 
 @Composable
 private fun Footnote(text: String) {
-    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(text, style = MaterialTheme.typography.bodySmall, color = Chest.Muted)
+}
+
+/** Small print on the sea, under a board. */
+@Composable
+private fun Note(text: String) {
+    Text(
+        text,
+        Modifier.padding(horizontal = 6.dp),
+        style = MaterialTheme.typography.bodySmall,
+        color = Chest.Muted.copy(alpha = 0.85f),
+    )
 }
 
 @Composable
