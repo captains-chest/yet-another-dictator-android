@@ -32,6 +32,7 @@ class DictatorAccessibilityService : AccessibilityService(), FocusedField {
     }
 
     override fun onDestroy() {
+        removePane()
         removeBubble()
         if (instance == this) instance = null
         // The window belonged to this service. Ask the button to put it back when we return.
@@ -197,6 +198,51 @@ class DictatorAccessibilityService : AccessibilityService(), FocusedField {
             } catch (_: IllegalArgumentException) {
                 // The window was already removed.
             }
+        }
+
+        private var paneWindow: WindowManager? = null
+        private var pane: View? = null
+
+        /** The status plank beside the microphone: a second overlay, so the microphone's own window never changes. */
+        fun showPane(view: View, params: WindowManager.LayoutParams): Boolean {
+            val service = instance ?: return false
+            if (pane === view && view.isAttachedToWindow) return true
+            params.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+            params.format = PixelFormat.TRANSLUCENT
+            val windows = service.getSystemService(WindowManager::class.java)
+            return try {
+                windows.addView(view, params)
+                paneWindow = windows
+                pane = view
+                true
+            } catch (_: WindowManager.BadTokenException) {
+                false
+            } catch (_: SecurityException) {
+                false
+            } catch (_: IllegalStateException) {
+                paneWindow = windows
+                pane = view
+                true
+            }
+        }
+
+        fun updatePane(view: View, params: WindowManager.LayoutParams) {
+            try {
+                paneWindow?.updateViewLayout(view, params)
+            } catch (_: IllegalArgumentException) {
+                // The window was already removed.
+            }
+        }
+
+        fun removePane() {
+            val view = pane ?: return
+            try {
+                paneWindow?.removeView(view)
+            } catch (_: IllegalArgumentException) {
+                // Already gone.
+            }
+            pane = null
+            paneWindow = null
         }
 
         fun removeBubble() {

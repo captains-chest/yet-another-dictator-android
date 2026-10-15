@@ -26,7 +26,9 @@ The last one was chosen.
 - **The floating button is a moss "cookie"** (a scalloped circle) with an ink outline and a hard
   shadow, and the white Dictator mark when idle. Listening turns it gold with a dark stop square and
   it turns slowly; transcribing spins it with a light-moss ring; loading dims it; an error turns it
-  rust. All of it still fits the fixed bounds of ADR 0007, so nothing appears beside the button.
+  rust. All of it still fits the fixed bounds of ADR 0007. Beside it, the status pane of ADR 0007
+  is a plank in the same wood with rivets, light-moss level bars or a flowing sine wave, and cream serif
+  text.
 - The Dictator mark is a vector (`ic_logo`), traced from the launcher icon.
 - English only: the setup screen has no language choice, and Whisper is always told English.
 

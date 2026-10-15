@@ -11,6 +11,11 @@ All notable changes are documented here. The format follows
   light and dark mode alike. Setup is three steps with switches (microphone, typing, floating mic),
   and the speech model is a radio card. The floating button is a moss cookie with the Dictator mark;
   it turns gold with a stop square while listening (ADR 0009).
+- While dictating, a plank opens beside the floating button, toward the middle of the screen:
+  level bars and a timer while listening, "Writing" while transcribing, then "Typed N words · Undo"
+  for a few seconds. The button itself stays where it is (ADR 0007).
+- Holding the floating button starts recording after half a second instead of right away, so it is
+  easy to press and drag it somewhere else.
 - Dictator is English-only. The Dansk language option is removed, and so is the Language section:
   Whisper is always told English. Parakeet remains English only. The Danish UI locale (`values-da`) is removed.
 
