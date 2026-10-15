@@ -15,7 +15,8 @@ for file in "$@"; do
       echo "$file: signed with an Android debug key, not the upload key" >&2
       exit 1
     fi
-    grep -E "Signer #1 certificate (DN|SHA-256 digest)" <<<"$out"
+    # Signer lines differ between apksigner versions ("Signer #1", "Signer (minSdkVersion=…)").
+    grep -E "certificate (DN|SHA-256 digest)" <<<"$out" || true
   fi
   (cd "$(dirname "$file")" && sha256sum "$(basename "$file")" > "$(basename "$file").sha256")
   cat "$file.sha256"
