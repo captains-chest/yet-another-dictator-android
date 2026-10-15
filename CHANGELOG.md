@@ -15,6 +15,8 @@ All notable changes are documented here. The format follows
   asking. Switch models or delete one you no longer use under Models.
 
 ### Changed
+- Releases attach a `.sha256` next to the signed APK and AAB. The Release workflow checks the APK
+  signature with `apksigner` and refuses a debug key, and stops early if a signing secret is missing.
 - Dictation is one floating microphone. It appears when a text field is focused, and it is hidden
   otherwise. Tap to start and stop, hold to talk, drag to move it. Your own keyboard stays, and
   text is typed into the focused field. There is no second shortcut that turns dictation on and
