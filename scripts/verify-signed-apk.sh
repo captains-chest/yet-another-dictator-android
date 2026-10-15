@@ -3,6 +3,7 @@
 # Android debug key, then writes <file>.sha256 next to each given file (APKs and AABs).
 #   scripts/verify-signed-apk.sh dist/*.apk dist/*.aab
 set -euo pipefail
+trap 'echo "verify-signed-apk.sh: failed at line $LINENO: $BASH_COMMAND" >&2' ERR
 
 apksigner="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner"
 for file in "$@"; do
