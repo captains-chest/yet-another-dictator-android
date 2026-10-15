@@ -7,7 +7,12 @@ All notable changes are documented here. The format follows
 ## [Unreleased]
 
 ### Changed
-- Dictator is English-only. The Dansk language option is removed; Whisper offers Automatic or English. Parakeet remains English only. The Danish UI locale (`values-da`) is removed.
+- New look, from captains-chest.com: wood boards, gold coins and moss on a night-sea background, in
+  light and dark mode alike. Setup is three steps with switches (microphone, typing, floating mic),
+  and the speech model is a radio card. The floating button is a moss cookie with the Dictator mark;
+  it turns gold with a stop square while listening (ADR 0009).
+- Dictator is English-only. The Dansk language option is removed, and so is the Language section:
+  Whisper is always told English. Parakeet remains English only. The Danish UI locale (`values-da`) is removed.
 
 ## [0.3.0] - 2026-10-15
 

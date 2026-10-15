@@ -20,6 +20,7 @@ import android.view.Gravity
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import com.captainduckay.dictator.core.DictationController
+import com.captainduckay.dictator.core.DictationLanguage
 import com.captainduckay.dictator.core.DictationState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -234,7 +235,8 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
                 // A process restart may have had to drop the microphone type. The finger is the
                 // user gesture that lets us ask for it again, before AudioRecord starts.
                 setMicrophoneType(true)
-                controller.language = settings.language
+                // Dictator is English-only: Whisper is told so, Parakeet only knows English.
+                controller.language = DictationLanguage.ENGLISH
                 controller.pressed()
             }
         }

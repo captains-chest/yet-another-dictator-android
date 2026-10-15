@@ -1,6 +1,7 @@
 # 7. A floating button dictates; the user's keyboard stays
 
 - Status: Accepted
+- Note (2026-10-15): the button's look (logo, colours, cookie shape) is now [ADR 0009](0009-captains-chest-look.md).
 - Date: 2026-10-11
 - Supersedes: the interaction in [ADR 0001](0001-capture-in-the-keyboard.md)
 

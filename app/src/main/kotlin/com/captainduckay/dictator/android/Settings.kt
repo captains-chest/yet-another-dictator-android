@@ -1,16 +1,11 @@
 package com.captainduckay.dictator.android
 
 import android.content.Context
-import com.captainduckay.dictator.core.DictationLanguage
 import com.captainduckay.dictator.core.StringStore
 
 /** The few stored preferences. No text and no audio are ever stored. */
 class Settings(context: Context) : StringStore {
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-
-    var language: DictationLanguage
-        get() = DictationLanguage.fromStored(prefs.getString(KEY_LANGUAGE, null))
-        set(value) = prefs.edit().putString(KEY_LANGUAGE, value.storedValue).apply()
 
     var lastSeenVersion: String?
         get() = prefs.getString(KEY_LAST_SEEN, null)
@@ -35,7 +30,6 @@ class Settings(context: Context) : StringStore {
     }
 
     private companion object {
-        const val KEY_LANGUAGE = "language"
         const val KEY_LAST_SEEN = "lastSeenVersion"
         const val KEY_BUBBLE_X = "bubbleX"
         const val KEY_BUBBLE_Y = "bubbleY"

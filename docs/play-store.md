@@ -27,7 +27,7 @@ are done. Dictator types the text where your cursor is, with the right spacing a
 
 • Private. Speech recognition runs on your phone with OpenAI's Whisper model. Audio never leaves the
   device; the one-time model download (about 190 MB, Wi-Fi recommended) is the only network use.
-• English. Choose Automatic or English with Whisper, or Parakeet (English only).
+• English. Choose Parakeet (most accurate) or Whisper Small (smaller download).
 • Nothing is stored. Audio is kept in memory only while a dictation is transcribed, then
   discarded. Dictator keeps no history and never uses the clipboard.
 • Microphone only while you dictate. Android's microphone indicator shows exactly when Dictator

@@ -2,9 +2,9 @@ package com.captainduckay.dictator.android
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
 import android.os.Bundle
 import android.os.SystemClock
@@ -12,14 +12,14 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.accessibility.AccessibilityNodeInfo
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.withRotation
+import androidx.core.graphics.withTranslation
 import com.captainduckay.dictator.core.DictationState
 import kotlin.math.sin
 
 /**
- * The floating microphone: one fixed-size, icon-only control (ADR 0007). Every state is drawn inside
+ * The floating microphone: one fixed-size, icon-only control (ADR 0007), drawn as the moss "cookie"
+ * with the Dictator mark (ADR 0009). Every state is drawn inside
  * the same bounds, so the window never grows, shrinks or moves when the state changes. A small
  * badge slot in the top-right corner is reserved for Undo, or Discard when a dictation could not be
  * typed; a tap on the badge runs that action, a tap anywhere else is the microphone (or Try again).
@@ -49,8 +49,15 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
     private var mode = BubbleActions.Mode.Hidden
     private var shakeStartedAt = 0L
 
-    private val accent = accentColor(context)
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val outline =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            color = INK
+            strokeJoin = Paint.Join.ROUND
+        }
+    private val cookie = Path()
+    private val logo = requireNotNull(context.getDrawable(R.drawable.ic_logo)).mutate()
     private val ring =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
@@ -58,7 +65,7 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
         }
     private val icon =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = 0xFFFFFFFF.toInt()
+            color = CREAM
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
         }
@@ -157,22 +164,46 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
         val radius = size / 2f - inset
 
         val problem = error != null || state is DictationState.Unavailable || mode == BubbleActions.Mode.Retry
-        fill.color =
+        val recording = !problem && state == DictationState.Recording
+        val body =
             when {
-                problem -> WARNING
-                state == DictationState.Recording -> RECORDING
-                state == DictationState.Transcribing -> TRANSCRIBING
-                state == DictationState.LoadingModel -> IDLE_DIM
-                else -> accent
+                problem -> RUST
+                recording -> GOLD
+                state == DictationState.LoadingModel -> MOSS_DIM
+                else -> MOSS
             }
-        canvas.drawCircle(cx, cy, radius, fill)
+        // The cookie turns slowly while listening and quickly while transcribing; the icon stays upright.
+        val turn =
+            when {
+                recording -> (now % 6000L) * 0.06f
+                state == DictationState.Transcribing -> (now % 1400L) * (360f / 1400f)
+                else -> 0f
+            }
+        if (recording) {
+            Cookie.path(cx, cy, radius, lobes = 12, depth = 0.06f, into = cookie)
+        } else {
+            Cookie.path(cx, cy, radius, into = cookie)
+        }
+        val shadow = pxf(2.5f)
+        canvas.withTranslation(shadow, shadow) {
+            withRotation(turn, cx, cy) {
+                fill.color = INK
+                drawPath(cookie, fill)
+            }
+        }
+        canvas.withRotation(turn, cx, cy) {
+            fill.color = body
+            drawPath(cookie, fill)
+            outline.strokeWidth = pxf(2.5f)
+            drawPath(cookie, outline)
+        }
 
         var animating = shaking
         when {
             state == DictationState.Recording -> {
                 // Level ring plus a slow pulse, both inside the fixed margin.
                 val pulse = (sin(now / 180.0).toFloat() + 1f) / 2f
-                ring.color = RECORDING
+                ring.color = GOLD
                 ring.alpha = (90 + 120 * pulse).toInt()
                 ring.strokeWidth = pxf(2) + pxf(3) * maxOf(level, pulse * 0.4f)
                 canvas.drawCircle(cx, cy, radius + inset / 2f, ring)
@@ -181,7 +212,7 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
             }
             state == DictationState.Transcribing || state == DictationState.LoadingModel -> {
                 val sweepStart = (now % 1000L) * 0.36f
-                ring.color = if (state == DictationState.Transcribing) TRANSCRIBING else accent
+                ring.color = ACCENT
                 ring.strokeWidth = pxf(3)
                 val r = radius + inset / 2f
                 arc.set(cx - r, cy - r, cx + r, cy + r)
@@ -193,21 +224,31 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
         when {
             mode == BubbleActions.Mode.Retry -> drawRetry(canvas, cx, cy)
             problem -> drawWarning(canvas, cx, cy)
-            else -> drawMic(canvas, cx, cy)
+            recording -> drawStop(canvas, cx, cy)
+            else -> drawLogo(canvas, cx, cy, dim = state == DictationState.LoadingModel)
         }
+        if (state == DictationState.Transcribing) animating = true
         drawBadge(canvas, size)
         if (animating) postInvalidateOnAnimation()
     }
 
-    private fun drawMic(canvas: Canvas, cx: Float, cy: Float) {
+    /** The white Dictator mark. */
+    private fun drawLogo(canvas: Canvas, cx: Float, cy: Float, dim: Boolean) {
+        val h = pxf(LOGO_DP)
+        val w = h * logo.intrinsicWidth / logo.intrinsicHeight
+        logo.setBounds((cx - w / 2).toInt(), (cy - h / 2).toInt(), (cx + w / 2).toInt(), (cy + h / 2).toInt())
+        logo.setTint(0xFFFFFFFF.toInt())
+        logo.alpha = if (dim) 150 else 255
+        logo.draw(canvas)
+    }
+
+    /** Listening: a dark stop square on the gold cookie. */
+    private fun drawStop(canvas: Canvas, cx: Float, cy: Float) {
         icon.style = Paint.Style.FILL
-        val head = pxf(7)
-        canvas.drawRoundRect(cx - head / 2f, cy - pxf(12), cx + head / 2f, cy - pxf(1), head, head, icon)
-        icon.style = Paint.Style.STROKE
-        icon.strokeWidth = pxf(2)
-        canvas.drawArc(cx - pxf(8), cy - pxf(10), cx + pxf(8), cy + pxf(4), 0f, 180f, false, icon)
-        canvas.drawLine(cx, cy + pxf(4), cx, cy + pxf(9), icon)
-        canvas.drawLine(cx - pxf(5), cy + pxf(9), cx + pxf(5), cy + pxf(9), icon)
+        icon.color = BROWN
+        val half = pxf(STOP_DP) / 2f
+        canvas.drawRoundRect(cx - half, cy - half, cx + half, cy + half, pxf(4), pxf(4), icon)
+        icon.color = CREAM
     }
 
     private fun drawWarning(canvas: Canvas, cx: Float, cy: Float) {
@@ -239,6 +280,8 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
         val by = r
         fill.color = BADGE
         canvas.drawCircle(bx, by, r, fill)
+        outline.strokeWidth = pxf(1.5f)
+        canvas.drawCircle(bx, by, r - pxf(0.75f), outline)
         icon.style = Paint.Style.STROKE
         icon.strokeWidth = pxf(1.8f)
         val k = r * 0.45f
@@ -346,18 +389,18 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
         private const val RING_DP = 6
         private const val BADGE_DP = 20
         private const val SHAKE_MS = 400L
-        private const val RECORDING = 0xFFD32F2F.toInt()
-        private const val TRANSCRIBING = 0xFFF57C00.toInt()
-        private const val WARNING = 0xFFB26A00.toInt()
-        private const val IDLE_DIM = 0xFF757575.toInt()
-        private const val BADGE = 0xE6212121.toInt()
+        private const val LOGO_DP = 32
+        private const val STOP_DP = 18
 
-        private fun accentColor(context: Context): Int {
-            val night =
-                (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-                    Configuration.UI_MODE_NIGHT_YES
-            val scheme = if (night) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            return scheme.primary.toArgb()
-        }
+        // The captains-chest.com palette (ADR 0009), as in Theme.kt.
+        private const val MOSS = 0xFF3F6A31.toInt()
+        private const val MOSS_DIM = 0xFF4B5A44.toInt()
+        private const val GOLD = 0xFFE7C06A.toInt()
+        private const val RUST = 0xFFB5532B.toInt()
+        private const val ACCENT = 0xFFB6E08A.toInt()
+        private const val INK = 0xFF050807.toInt()
+        private const val BROWN = 0xFF2A1A0A.toInt()
+        private const val CREAM = 0xFFFFF3D6.toInt()
+        private const val BADGE = 0xF21F1B15.toInt()
     }
 }

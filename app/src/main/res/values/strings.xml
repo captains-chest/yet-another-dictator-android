@@ -2,31 +2,34 @@
 <resources>
     <string name="app_name" translatable="false">Dictator</string>
 
-    <string name="section_microphone">Microphone</string>
-    <string name="section_button">Button</string>
-    <string name="section_language">Language</string>
-    <string name="section_model">Model</string>
-    <string name="section_try">Try it</string>
+    <string name="section_ready">Ready to dictate</string>
+    <string name="section_model">Speech model</string>
     <string name="section_about">About</string>
 
-    <string name="microphone_allowed">Microphone allowed</string>
+    <string name="setup_microphone">Microphone</string>
+    <string name="setup_microphone_on">Only on while you dictate</string>
+    <string name="setup_microphone_off">Tap to allow, so Dictator can hear you</string>
+    <string name="setup_microphone_blocked">Blocked. Tap to allow it in Settings</string>
+    <string name="setup_typing">Typing</string>
+    <string name="setup_typing_on">Writes into the field you\'re in</string>
+    <string name="setup_typing_off">Tap to turn on Dictator under Accessibility</string>
+    <string name="setup_button">Floating mic</string>
+    <string name="setup_button_on">Tap to toggle · hold to talk</string>
+    <string name="setup_button_off">Tap to show it in text fields</string>
+
     <string name="microphone_footnote">Dictator listens only while you dictate, and transcribes on this phone. Audio is never saved.</string>
-    <string name="action_allow_microphone">Allow Microphone</string>
-    <string name="action_open_settings">Open Settings</string>
 
     <string name="typing_needed">Turn on Dictator under Accessibility. It types into the field you are in, and reads only that field so the words land at the cursor. Nothing is stored.</string>
     <string name="restricted_settings_hint" translatable="false">Installed the APK yourself and Android says "App was denied access" or "Restricted setting"? Open Settings → Apps → Dictator, tap ⋮ (top right), choose "Allow restricted settings", then turn on Dictator under Accessibility again.</string>
     <string name="shortcut_hint" translatable="false">The microphone is the only button you need. If Android also shows its own accessibility shortcut button, you can turn it off under Settings → Accessibility → Dictator → Dictator shortcut.</string>
-    <string name="action_allow_typing">Turn on typing</string>
     <string name="button_ready">One microphone. It appears when a text field is focused. Tap to start and stop, hold to talk, drag to move it.</string>
-    <string name="action_show_button">Show the button</string>
     <string name="action_hide_button">Hide the button</string>
     <string name="button_footnote">Dictator is not a keyboard, so it never replaces the one you type with. Audio stays on this phone. The button reads the focused text field, in memory, only to place the dictation. It never uses the clipboard.</string>
     <string name="accessibility_description">Types dictated speech into the text field you are using. Dictator reads that field so the words land at the cursor, with the right spacing. It does not read the rest of the screen, and it stores nothing.</string>
 
-    <string name="language_automatic">Automatic</string>
 
-    <string name="try_placeholder">Tap here, then tap the floating microphone.</string>
+    <string name="try_title">Try it here</string>
+    <string name="try_placeholder">Tap here, then tap the floating mic…</string>
 
     <string name="about_version">Version %1$s</string>
     <string name="about_privacy">Audio never leaves the device; the one-time model download is the only network use. MIT licensed.</string>
@@ -63,22 +66,21 @@
     <string name="model_failed">The download failed. Try again.</string>
     <string name="action_cancel">Cancel</string>
     <string name="model_footnote">Downloading the speech model you choose, from Hugging Face, is the only network use. Every file is checked against a SHA-256 hash built into the app. Your audio never leaves the device.</string>
-    <string name="section_models">Models</string>
-    <string name="language_english_only">Parakeet understands English only. Switch to Whisper Small to choose Automatic or English.</string>
     <string name="model_parakeet_accuracy" formatted="false">Most accurate for English (6.1% average word error rate on the Open ASR Leaderboard).</string>
     <string name="model_whisper_accuracy">Less accurate than Parakeet; smaller download.</string>
     <string name="model_parakeet_speed">Fast on the phone\'s CPU, without Whisper\'s 30-second windows.</string>
     <string name="model_whisper_speed">Slower on long dictations; smaller download.</string>
     <string name="model_recommended">%1$s (recommended)</string>
     <string name="model_meta_english">%1$s MB download · English only</string>
-    <string name="model_meta_multilingual">%1$s MB download · Automatic or English</string>
     <string name="model_picker_title">Choose a speech model</string>
     <string name="model_picker_intro">Dictator transcribes on this phone. Choose one model; only that one is downloaded, and only after you confirm. You can switch later.</string>
     <string name="action_choose_model">Choose</string>
     <string name="action_later">Later</string>
-    <string name="action_use_model">Use</string>
-    <string name="action_delete_model">Delete</string>
     <string name="model_in_use">In use</string>
+    <string name="model_size">%1$s MB</string>
+    <string name="model_parakeet_note">Most accurate · fast</string>
+    <string name="model_whisper_note">Smaller · slower</string>
+    <string name="action_delete_named">Delete %1$s</string>
     <string name="model_switch_busy">Cancel the running download to switch models.</string>
-    <string name="model_none_chosen">Choose a speech model below. Nothing is downloaded until you choose one and tap Download.</string>
+    <string name="model_none_chosen">Choose a speech model above. Nothing is downloaded until you choose one and tap Download.</string>
 </resources>
