@@ -24,6 +24,20 @@ The pipeline itself (record, transcribe on device, type, no clipboard, nothing s
   focused, and it stays up through a dictation that is still recording, transcribing, or waiting to
   be typed. Android's accessibility shortcut is not a second control: that button only turned
   dictation on and off.
+- **No draw-over-other-apps permission.** The microphone window is `TYPE_ACCESSIBILITY_OVERLAY`,
+  added by the accessibility service, which needs no `SYSTEM_ALERT_WINDOW`. The app does not
+  declare or ask for it. The service does not request Android's accessibility button
+  (`flagRequestAccessibilityButton`); setup tells the user they can turn Android's shortcut off.
+- **Icon only, fixed footprint.** The microphone has no text. It is one circle of fixed size
+  (`BubblePanel.SIZE_DP`) and its window never changes size or position with the state. Only the
+  icon, tint and animation inside those bounds change: idle is the mic in the accent colour;
+  listening is red with a pulsing level ring; transcribing (and loading) shows a spinning ring;
+  an error turns it amber with a warning mark and a short shake inside the ring margin. Undo, and
+  Discard for a dictation that could not be typed, sit in a reserved badge slot in the top-right
+  corner of the same bounds; a tap on the badge runs it, a tap elsewhere is the microphone (or Try
+  again). Nothing appears beside the button, so it never moves. Screen readers get a
+  content description per state, errors are announced, and the badge action is a custom
+  accessibility action.
 - The user's keyboard stays. Text is inserted by an **accessibility service** that reads only the
   focused editable, in memory, to place the words and to space them (`FieldEdit`, then
   `ACTION_SET_TEXT`). The clipboard is still never used.
@@ -36,7 +50,9 @@ The pipeline itself (record, transcribe on device, type, no clipboard, nothing s
 
 ## Consequences
 
-- Setup is three grants: microphone, drawing over other apps, and the accessibility service. The
+- Setup is two grants: microphone and the accessibility service. On Android 13+ a sideloaded APK
+  must first "Allow restricted settings" in the app's info screen before accessibility can be
+  turned on; setup explains this. The
   accessibility screen tells the user that only the focused field is read.
 - Fields that do not expose editable text (some web views, some custom editors) cannot be typed
   into. The button says so. Passwords are refused.

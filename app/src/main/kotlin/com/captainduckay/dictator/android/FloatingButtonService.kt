@@ -325,8 +325,8 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
 
     private fun clamp() {
         val bounds = windowManager.currentWindowMetrics.bounds
-        val width = panel.width.takeIf { it > 0 } ?: dp(56)
-        val height = panel.height.takeIf { it > 0 } ?: dp(80)
+        val width = panel.width.takeIf { it > 0 } ?: dp(BubblePanel.SIZE_DP)
+        val height = panel.height.takeIf { it > 0 } ?: dp(BubblePanel.SIZE_DP)
         params.x = params.x.coerceIn(0, (bounds.width() - width).coerceAtLeast(0))
         params.y = params.y.coerceIn(0, (bounds.height() - height).coerceAtLeast(0))
     }

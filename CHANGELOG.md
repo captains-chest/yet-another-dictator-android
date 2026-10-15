@@ -6,6 +6,16 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- One button. The floating microphone no longer needs "Display over other apps": the
+  `SYSTEM_ALERT_WINDOW` permission and its setup step are gone (it was never used, the microphone is
+  an accessibility overlay). Setup notes that Android's own accessibility shortcut button can be
+  turned off, and how sideloaded installs get past "App was denied access" (Allow restricted
+  settings).
+- The microphone is icon only, with a fixed size and position in every state: red with a pulsing
+  level ring while listening, a spinning ring while transcribing, amber with a shake on an error.
+  Undo and Discard are a small badge on the button instead of text labels.
+
 ## [0.2.0] - 2026-10-15
 
 ### Added

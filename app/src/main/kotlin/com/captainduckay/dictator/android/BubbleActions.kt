@@ -2,7 +2,7 @@ package com.captainduckay.dictator.android
 
 import com.captainduckay.dictator.core.DictationState
 
-/** Which secondary labels sit above the microphone (ADR 0007). */
+/** Which action the reserved badge slot on the microphone offers (ADR 0007). */
 internal object BubbleActions {
     enum class Mode {
         Hidden,
@@ -10,7 +10,7 @@ internal object BubbleActions {
         Undo,
     }
 
-    /** Undelivered text wins over Undo so Try again / Discard stay alone. */
+    /** Undelivered text wins over Undo so Try again / Discard win. */
     fun mode(showRetry: Boolean, canUndo: Boolean, state: DictationState): Mode =
         when {
             showRetry -> Mode.Retry
