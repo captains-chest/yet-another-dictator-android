@@ -107,14 +107,14 @@ class DictationPromptTest {
 class DictationLanguageTest {
     @Test fun mapsToWhisperCodes() {
         assertNull(DictationLanguage.AUTOMATIC.whisperCode)
-        assertEquals("da", DictationLanguage.DANISH.whisperCode)
         assertEquals("en", DictationLanguage.ENGLISH.whisperCode)
     }
 
     @Test fun unknownStoredValueFallsBackToAutomatic() {
         assertEquals(DictationLanguage.AUTOMATIC, DictationLanguage.fromStored(null))
         assertEquals(DictationLanguage.AUTOMATIC, DictationLanguage.fromStored("klingon"))
-        assertEquals(DictationLanguage.DANISH, DictationLanguage.fromStored("danish"))
+        assertEquals(DictationLanguage.AUTOMATIC, DictationLanguage.fromStored("danish"))
+        assertEquals(DictationLanguage.ENGLISH, DictationLanguage.fromStored("english"))
     }
 }
 

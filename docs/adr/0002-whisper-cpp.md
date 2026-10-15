@@ -1,6 +1,7 @@
 # 2. On-device recognition with whisper.cpp through JNI
 
 - Status: Accepted
+- Note (2026-10-15): Dictator is English-only; Dansk is no longer offered.
 - Date: 2026-10-10
 
 ## Context

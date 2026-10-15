@@ -1,6 +1,7 @@
 # 4. Whisper Small (q5_1) is bundled in the APK; the app never downloads
 
 - Status: Superseded by [ADR 0006](0006-download-model-after-install.md) (2026-10-11)
+- Note (2026-10-15): Dictator is English-only; Dansk is no longer offered.
 - Date: 2026-10-10
 
 ## Context

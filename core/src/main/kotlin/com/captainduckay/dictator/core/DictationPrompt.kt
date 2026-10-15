@@ -2,8 +2,8 @@ package com.captainduckay.dictator.core
 
 /**
  * A short, well-punctuated "previous text" given to Whisper as its initial prompt, so short
- * dictations keep their final full stop or question mark. Bilingual; it only sets the style. Port
- * of DictationCore's `DictationPrompt`.
+ * dictations keep their final full stop or question mark. It only sets punctuation style (Dictator
+ * is English-only). Port of DictationCore's `DictationPrompt`.
  */
 object DictationPrompt {
     const val TEXT = "Hej, hvordan går det? Det går godt, tak. Hello, how are you? I'm fine, thanks."

@@ -14,7 +14,7 @@ gains a permission or network access, update this file and the privacy policy in
 **App name** (30): `Dictator: Offline Dictation`
 
 **Short description** (80):
-`Private dictation for Danish and English. A floating button. Works offline.`
+`Private English dictation. A floating button. Works offline.`
 
 **Full description** (4000):
 
@@ -27,7 +27,7 @@ are done. Dictator types the text where your cursor is, with the right spacing a
 
 • Private. Speech recognition runs on your phone with OpenAI's Whisper model. Audio never leaves the
   device; the one-time model download (about 190 MB, Wi-Fi recommended) is the only network use.
-• Danish and English. Pick a language or let Dictator detect it.
+• English. Choose Automatic or English with Whisper, or Parakeet (English only).
 • Nothing is stored. Audio is kept in memory only while a dictation is transcribed, then
   discarded. Dictator keeps no history and never uses the clipboard.
 • Microphone only while you dictate. Android's microphone indicator shows exactly when Dictator
@@ -43,37 +43,7 @@ the floating button and turn Dictator on under Accessibility so it can type into
 
 ## Store listing — Danish (da-DK)
 
-**App-navn**: `Dictator: Offline diktering`
-
-**Kort beskrivelse**:
-`Privat diktering til dansk og engelsk. En svævende knap. Virker offline.`
-
-**Fuld beskrivelse**:
-
-```
-Dictator omsætter tale til tekst i alle apps, direkte på din telefon. Intet af det, du siger,
-forlader enheden.
-
-Sæt markøren i et tekstfelt, så vises mikrofonen. Tryk på den, og tal ind i feltet, du allerede bruger. Dit
-tastatur bliver. Tryk igen for at afslutte, eller hold knappen nede, mens du taler, og slip, når
-du er færdig. Dictator skriver teksten, hvor markøren står, med de rigtige mellemrum og store
-bogstaver.
-
-• Privat. Talegenkendelsen kører på din telefon med OpenAI's Whisper-model. Lyd forlader aldrig
-  enheden; den ene download af modellen (ca. 190 MB, Wi-Fi anbefales) er den eneste brug af netværket.
-• Dansk og engelsk. Vælg et sprog, eller lad Dictator finde det selv.
-• Intet gemmes. Lyden findes kun i hukommelsen, mens en diktering bliver omsat, og slettes derefter.
-  Dictator gemmer ingen historik og bruger aldrig udklipsholderen.
-• Mikrofonen bruges kun, mens du dikterer. Androids mikrofonindikator viser præcis, hvornår
-  Dictator lytter.
-• Enkel med vilje. Én knap, ingen konti, ingen reklamer, ingen sporing.
-
-Dictator er open source (MIT) og en del af Yet Another Dictator-familien til macOS, iOS og Android:
-https://github.com/captains-chest/yet-another-dictator-android
-
-Kræver Android 12 eller nyere. Efter installation downloades talemodellen én gang (ca. 190 MB).
-Tillad den svævende knap, og slå Dictator til under Hjælpefunktioner, så den kan skrive i feltet.
-```
+Withdrawn 2026-10-15: Dictator is English-only. Do not publish a da-DK listing.
 
 ## Graphics still needed
 

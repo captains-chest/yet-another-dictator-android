@@ -330,11 +330,11 @@ class DictationControllerTest {
     @Test fun passesTheChosenLanguageToTheTranscriber() =
         runTest {
             val controller = makeController()
-            controller.language = DictationLanguage.DANISH
-            dictate(controller, "hej")
+            controller.language = DictationLanguage.ENGLISH
+            dictate(controller, "hello")
             controller.language = DictationLanguage.AUTOMATIC
             dictate(controller, "hello")
-            assertEquals(listOf("da", null), transcriber.languages)
+            assertEquals(listOf("en", null), transcriber.languages)
         }
 
     @Test fun consecutiveDictationsAreSpacedAndCapitalized() =

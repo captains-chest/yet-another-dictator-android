@@ -10,9 +10,9 @@ logic and whisper.cpp.
 ## Design goals
 
 - **Simple and robust** — same philosophy as the macOS app: no fancy features, just reliable dictation.
-- **Platform native** — a floating microphone, Material You colours, Danish and English UI.
+- **Platform native** — a floating microphone, Material You colours, English UI.
 - **Hold** = push-to-talk, **tap** = toggle (same dual-mode as the macOS hotkey and the iOS keyboard).
-- **Your choice of model** — NVIDIA Parakeet TDT 0.6B v2 (English, most accurate, int8, about 661 MB, via sherpa-onnx) or Whisper Small (q5_1, Dansk/English, 190 MB, via whisper.cpp), on-device. Picked on first launch; only the chosen one is downloaded, after you confirm (Wi-Fi recommended).
+- **Your choice of model** — NVIDIA Parakeet TDT 0.6B v2 (English, most accurate, int8, about 661 MB, via sherpa-onnx) or Whisper Small (q5_1, Automatic or English, 190 MB, via whisper.cpp), on-device. Picked on first launch; only the chosen one is downloaded, after you confirm (Wi-Fi recommended).
 - **Shared core** — pure logic lives in `core`, a tested Kotlin port of DictationCore (ADR 0005).
 
 ## Architecture
@@ -116,7 +116,7 @@ These are requirements for every change:
 
 The floating button, the app, the JNI bridge and the model download are in place, and CI builds and
 tests them. Not yet measured on a real phone: latency after the shorter Whisper window, peak memory
-while the button is showing, Danish/English quality, and how typing behaves in apps whose fields
+while the button is showing, English quality, and how typing behaves in apps whose fields
 are not exposed to accessibility (ADR 0007, 0002), and the download on a real network (ADR 0006).
 
 ## Conventions
