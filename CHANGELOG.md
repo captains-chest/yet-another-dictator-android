@@ -6,6 +6,10 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Removed
+- The Danish UI translation. The app is English only; Dansk stays available as a dictation
+  language with Whisper Small.
+
 ## [0.3.0] - 2026-10-15
 
 ### Changed

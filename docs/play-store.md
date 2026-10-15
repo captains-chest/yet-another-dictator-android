@@ -37,42 +37,8 @@ are done. Dictator types the text where your cursor is, with the right spacing a
 Dictator is open source (MIT) and part of the Yet Another Dictator family for macOS, iOS and
 Android: https://github.com/captains-chest/yet-another-dictator-android
 
-Requires Android 12 or later. After install, download the speech model once (about 190 MB). Allow
-the floating button and turn Dictator on under Accessibility so it can type into the current field.
-```
-
-## Store listing — Danish (da-DK)
-
-**App-navn**: `Dictator: Offline diktering`
-
-**Kort beskrivelse**:
-`Privat diktering til dansk og engelsk. En svævende knap. Virker offline.`
-
-**Fuld beskrivelse**:
-
-```
-Dictator omsætter tale til tekst i alle apps, direkte på din telefon. Intet af det, du siger,
-forlader enheden.
-
-Sæt markøren i et tekstfelt, så vises mikrofonen. Tryk på den, og tal ind i feltet, du allerede bruger. Dit
-tastatur bliver. Tryk igen for at afslutte, eller hold knappen nede, mens du taler, og slip, når
-du er færdig. Dictator skriver teksten, hvor markøren står, med de rigtige mellemrum og store
-bogstaver.
-
-• Privat. Talegenkendelsen kører på din telefon med OpenAI's Whisper-model. Lyd forlader aldrig
-  enheden; den ene download af modellen (ca. 190 MB, Wi-Fi anbefales) er den eneste brug af netværket.
-• Dansk og engelsk. Vælg et sprog, eller lad Dictator finde det selv.
-• Intet gemmes. Lyden findes kun i hukommelsen, mens en diktering bliver omsat, og slettes derefter.
-  Dictator gemmer ingen historik og bruger aldrig udklipsholderen.
-• Mikrofonen bruges kun, mens du dikterer. Androids mikrofonindikator viser præcis, hvornår
-  Dictator lytter.
-• Enkel med vilje. Én knap, ingen konti, ingen reklamer, ingen sporing.
-
-Dictator er open source (MIT) og en del af Yet Another Dictator-familien til macOS, iOS og Android:
-https://github.com/captains-chest/yet-another-dictator-android
-
-Kræver Android 12 eller nyere. Efter installation downloades talemodellen én gang (ca. 190 MB).
-Tillad den svævende knap, og slå Dictator til under Hjælpefunktioner, så den kan skrive i feltet.
+Requires Android 12 or later. After install, download the speech model once (about 190 MB). Turn
+Dictator on under Accessibility so it can type into the current field.
 ```
 
 ## Graphics still needed

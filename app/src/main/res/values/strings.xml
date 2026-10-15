@@ -15,8 +15,8 @@
     <string name="action_open_settings">Open Settings</string>
 
     <string name="typing_needed">Turn on Dictator under Accessibility. It types into the field you are in, and reads only that field so the words land at the cursor. Nothing is stored.</string>
-    <string name="restricted_settings_hint" translatable="false">Installed the APK yourself and Android says "App was denied access" or "Restricted setting"? Open Settings → Apps → Dictator, tap ⋮ (top right), choose "Allow restricted settings", then turn on Dictator under Accessibility again.</string>
-    <string name="shortcut_hint" translatable="false">The microphone is the only button you need. If Android also shows its own accessibility shortcut button, you can turn it off under Settings → Accessibility → Dictator → Dictator shortcut.</string>
+    <string name="restricted_settings_hint">Installed the APK yourself and Android says "App was denied access" or "Restricted setting"? Open Settings → Apps → Dictator, tap ⋮ (top right), choose "Allow restricted settings", then turn on Dictator under Accessibility again.</string>
+    <string name="shortcut_hint">The microphone is the only button you need. If Android also shows its own accessibility shortcut button, you can turn it off under Settings → Accessibility → Dictator → Dictator shortcut.</string>
     <string name="action_allow_typing">Turn on typing</string>
     <string name="button_ready">One microphone. It appears when a text field is focused. Tap to start and stop, hold to talk, drag to move it.</string>
     <string name="action_show_button">Show the button</string>
@@ -38,9 +38,9 @@
     <string name="needs_microphone">Allow the microphone in Dictator to dictate.</string>
     <string name="status_loading">Loading the speech model…</string>
     <string name="mic_label">Dictate</string>
-    <string name="mic_label_recording" translatable="false">Listening. Tap or release to finish</string>
-    <string name="mic_label_transcribing" translatable="false">Transcribing</string>
-    <string name="mic_label_loading" translatable="false">Loading the speech model</string>
+    <string name="mic_label_recording">Listening. Tap or release to finish</string>
+    <string name="mic_label_transcribing">Transcribing</string>
+    <string name="mic_label_loading">Loading the speech model</string>
     <string name="action_try_again">Try again</string>
     <string name="action_discard">Discard</string>
     <string name="action_undo">Undo</string>
