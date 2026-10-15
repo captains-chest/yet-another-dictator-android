@@ -88,4 +88,3 @@ will then show "No data collected" and "No data shared".
   manifest: a dictation button that stays on screen so the user can dictate without switching
   keyboards. The microphone type is taken while the button is showing; capture still starts only
   when the user dictates.
-- **Draw over other apps:** the same button. The user grants it from the setup screen.
