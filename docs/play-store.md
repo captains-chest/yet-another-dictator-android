@@ -37,8 +37,9 @@ are done. Dictator types the text where your cursor is, with the right spacing a
 Dictator is open source (MIT) and part of the Yet Another Dictator family for macOS, iOS and
 Android: https://github.com/captains-chest/yet-another-dictator-android
 
-Requires Android 12 or later. After install, download the speech model once (about 190 MB). Allow
-the floating button and turn Dictator on under Accessibility so it can type into the current field.
+Requires Android 12 or later. After install, download the speech model once (about 190 MB). Turn
+Dictator on under Accessibility; the microphone then appears when a text field is focused and
+types into it. No draw-over-other-apps permission is needed.
 ```
 
 ## Store listing — Danish (da-DK)
@@ -92,4 +93,3 @@ will then show "No data collected" and "No data shared".
   manifest: a dictation button that stays on screen so the user can dictate without switching
   keyboards. The microphone type is taken while the button is showing; capture still starts only
   when the user dictates.
-- **Draw over other apps:** the same button. The user grants it from the setup screen.
