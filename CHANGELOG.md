@@ -19,7 +19,6 @@ All notable changes are documented here. The format follows
   Undo and Discard are a small badge on the button instead of text labels.
 - Dictator is English-only. The Dansk language option is removed; Whisper offers Automatic or English. Parakeet remains English only. The Danish UI locale (`values-da`) is removed.
 
-
 ## [0.2.0] - 2026-10-15
 
 ### Added
