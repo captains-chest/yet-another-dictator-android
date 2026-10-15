@@ -56,9 +56,12 @@ No build contains a model (ADR 0006). On first launch the app asks which model t
 against the SHA-256 manifest (`scripts/model-manifest.txt`) that ships inside the signed APK.
 
 Releases: push a `v*` tag with a matching CHANGELOG section. The Release workflow builds a signed
-AAB and universal APK, attaches them to a GitHub release, and uploads the AAB as a draft to Play's
+AAB and universal APK, checks the APK with `apksigner` (refusing a debug key), attaches both with
+`.sha256` files to a GitHub release, and uploads the AAB as a draft to Play's
 internal track once the `PLAY_SERVICE_ACCOUNT_JSON` secret exists. The upload key lives only in
-repository secrets (and an offline backup); Google holds the app signing key (Play App Signing).
+repository secrets `ANDROID_UPLOAD_KEYSTORE_BASE64`, `ANDROID_UPLOAD_KEYSTORE_PASSWORD`,
+`ANDROID_UPLOAD_KEY_ALIAS` and `ANDROID_UPLOAD_KEY_PASSWORD` (and an offline backup); the workflow
+stops early naming any that are missing; Google holds the app signing key (Play App Signing).
 Store listing, Data safety and content rating answers: `docs/play-store.md`. Privacy policy:
 https://captains-chest.com/dictator/privacy
 

@@ -1,7 +1,7 @@
 name: Release
 
 # On a v* tag: build a signed AAB (for Play) and a signed universal APK (for sideloading), attach
-# both to a GitHub release, and upload the AAB to Play's internal track once CaptainDuckay has added a
+# both with their .sha256 files to a GitHub release, and upload the AAB to Play's internal track once CaptainDuckay has added a
 # PLAY_SERVICE_ACCOUNT_JSON secret (skipped until then).
 on:
   push:
@@ -45,12 +45,30 @@ jobs:
           echo "VERSION_CODE=$((100 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
           grep -q "^## \[$version\]" CHANGELOG.md || { echo "CHANGELOG.md has no section for $version" >&2; exit 1; }
 
+      # Fails before building, naming only the missing secrets (never their values).
+      - name: Check signing secrets
+        env:
+          ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          ANDROID_UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
+          ANDROID_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          ANDROID_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: |
+          missing=()
+          for name in ANDROID_UPLOAD_KEYSTORE_BASE64 ANDROID_UPLOAD_KEYSTORE_PASSWORD ANDROID_UPLOAD_KEY_ALIAS ANDROID_UPLOAD_KEY_PASSWORD; do
+            [[ -n "${!name}" ]] || missing+=("$name")
+          done
+          if (( ${#missing[@]} )); then
+            echo "::error::Missing repository secrets for release signing: ${missing[*]} (see README, Releases)"
+            exit 1
+          fi
+
       - name: Upload key
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
         run: |
           umask 077
           echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          test -s "$RUNNER_TEMP/upload.jks" || { echo "::error::ANDROID_UPLOAD_KEYSTORE_BASE64 did not decode to a keystore"; exit 1; }
           echo "ANDROID_UPLOAD_KEYSTORE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
 
       # Builds the AAB with Gradle and the universal APK from it with bundletool, both signed.
@@ -64,7 +82,8 @@ jobs:
           mkdir -p dist
           cp app/build/outputs/bundle/release/app-release.aab "dist/dictator-android-$VERSION_NAME.aab"
           cp build/dictator-universal.apk "dist/dictator-android-$VERSION_NAME.apk"
-          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify "dist/dictator-android-$VERSION_NAME.apk"
+          # apksigner verify (v2+, not a debug key) and a .sha256 next to each file.
+          scripts/verify-signed-apk.sh "dist/dictator-android-$VERSION_NAME.apk" "dist/dictator-android-$VERSION_NAME.aab"
           ls -l dist
 
       - name: GitHub release

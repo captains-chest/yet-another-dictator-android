@@ -90,3 +90,20 @@ jobs:
           path: app/build/outputs/bundle/release/app-release.aab
           retention-days: 14
           compression-level: 0
+
+      # Exercises the release signing path with a throwaway key, since secrets aren't available here.
+      - name: Signed universal APK (throwaway key)
+        run: |
+          set -euo pipefail
+          umask 077
+          export ANDROID_UPLOAD_KEYSTORE="$RUNNER_TEMP/ci.jks" ANDROID_UPLOAD_KEY_ALIAS=ci
+          export ANDROID_UPLOAD_KEYSTORE_PASSWORD="$(openssl rand -hex 16)"
+          export ANDROID_UPLOAD_KEY_PASSWORD="$ANDROID_UPLOAD_KEYSTORE_PASSWORD"
+          keytool -genkeypair -keystore "$ANDROID_UPLOAD_KEYSTORE" -storetype PKCS12 -alias ci \
+            -keyalg RSA -keysize 2048 -validity 1 -dname "CN=Dictator CI throwaway" \
+            -storepass:env ANDROID_UPLOAD_KEYSTORE_PASSWORD -keypass:env ANDROID_UPLOAD_KEY_PASSWORD
+          scripts/build-universal-apk.sh
+          mkdir -p dist && cp build/dictator-universal.apk dist/dictator-android-ci.apk
+          cp app/build/outputs/bundle/release/app-release.aab dist/dictator-android-ci.aab
+          scripts/verify-signed-apk.sh dist/dictator-android-ci.apk dist/dictator-android-ci.aab
+          rm -f "$ANDROID_UPLOAD_KEYSTORE"
