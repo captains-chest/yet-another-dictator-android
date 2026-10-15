@@ -97,8 +97,6 @@ class MainActivity : ComponentActivity() {
             PackageManager.PERMISSION_GRANTED
     }
 
-    fun canOverlay() = AndroidSettings.canDrawOverlays(this)
-
     fun isTypingEnabled(): Boolean {
         val enabled =
             AndroidSettings.Secure.getString(contentResolver, AndroidSettings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
@@ -117,9 +115,6 @@ class MainActivity : ComponentActivity() {
                 Uri.fromParts("package", packageName, null),
             ),
         )
-
-    fun openOverlaySettings() =
-        startActivity(Intent(AndroidSettings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
 
     fun openTypingSettings() {
         val component = ComponentName(this, DictatorAccessibilityService::class.java).flattenToString()
@@ -151,7 +146,6 @@ class MainActivity : ComponentActivity() {
 private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
     val activity = LocalActivity.current as MainActivity
     var microphone by remember { mutableStateOf(activity.hasMicrophone()) }
-    var overlay by remember { mutableStateOf(activity.canOverlay()) }
     var typing by remember { mutableStateOf(activity.isTypingEnabled()) }
     val buttonOn by FloatingButtonService.running.collectAsState()
     var language by remember { mutableStateOf(settings.language) }
@@ -182,10 +176,9 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
             activity.showButton()
         }
     }
-    // Settings can change while we're away (permission, overlay, accessibility): re-check on return.
+    // Settings can change while we're away (permission, accessibility): re-check on return.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         microphone = activity.hasMicrophone()
-        overlay = activity.canOverlay()
         typing = activity.isTypingEnabled()
     }
 
@@ -214,14 +207,9 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
             }
             Section(stringResource(R.string.section_button)) {
                 when {
-                    !overlay -> {
-                        Text(stringResource(R.string.overlay_needed))
-                        Button(onClick = activity::openOverlaySettings) {
-                            Text(stringResource(R.string.action_allow_overlay))
-                        }
-                    }
                     !typing -> {
                         Text(stringResource(R.string.typing_needed))
+                        Footnote(stringResource(R.string.restricted_settings_hint))
                         Button(onClick = activity::openTypingSettings) {
                             Text(stringResource(R.string.action_allow_typing))
                         }
@@ -245,6 +233,7 @@ private fun RootScreen(settings: Settings, initialWhatsNew: WhatsNew.Decision) {
                     }
                 }
                 Footnote(stringResource(R.string.button_footnote))
+                Footnote(stringResource(R.string.shortcut_hint))
             }
             Section(stringResource(R.string.section_language)) {
                 if (chosenModel?.englishOnly == true) Footnote(stringResource(R.string.language_english_only))

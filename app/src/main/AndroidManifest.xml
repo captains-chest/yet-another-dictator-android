@@ -6,8 +6,8 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-feature android:name="android.hardware.microphone" android:required="true" />
 
-    <!-- The floating button draws over other apps. The user grants this in Settings. -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- No SYSTEM_ALERT_WINDOW: the floating microphone is an accessibility overlay window, added by
+         DictatorAccessibilityService, which needs no draw-over-other-apps permission (ADR 0007). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
