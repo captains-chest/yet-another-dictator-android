@@ -79,7 +79,10 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
     }
 
     fun render(state: DictationState, level: Float, error: String?, showRetry: Boolean, canUndo: Boolean) {
-        val newError = error?.takeIf { it.isNotBlank() }
+        // A model that failed to load reports through the state, not through the error.
+        val newError =
+            error?.takeIf { it.isNotBlank() }
+                ?: (state as? DictationState.Unavailable)?.message?.takeIf { it.isNotBlank() }
         if (newError != null && newError != this.error) {
             shakeStartedAt = SystemClock.uptimeMillis()
             announceForAccessibility(newError)
@@ -290,7 +293,11 @@ internal class BubblePanel(context: Context, private val listener: Listener) : V
                 downAt = SystemClock.elapsedRealtime()
                 dragging = false
                 holding = false
-                handler.postDelayed(decideHold, BubbleGesture.DRAG_DECISION_MS)
+                // Only the microphone itself records on hold. A press on the badge, or on Try again,
+                // is a tap or a drag, so it can never start a dictation by accident.
+                if (!downOnBadge && mode != BubbleActions.Mode.Retry) {
+                    handler.postDelayed(decideHold, BubbleGesture.DRAG_DECISION_MS)
+                }
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
