@@ -6,6 +6,8 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-15
+
 ### Changed
 - One button. The floating microphone no longer needs "Display over other apps": the
   `SYSTEM_ALERT_WINDOW` permission and its setup step are gone (it was never used, the microphone is
