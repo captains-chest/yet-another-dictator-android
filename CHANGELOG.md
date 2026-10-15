@@ -6,38 +6,37 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-15
+
 ### Added
-- A second speech model: NVIDIA Parakeet TDT 0.6B v2, English only and the most accurate (about
-  661 MB). Whisper Small stays available, and is the one to use for Dansk.
-- On first launch Dictator asks which model to use, best first, with the size, accuracy and speed of
-  each. It downloads nothing until you choose and tap Download, and only the model you chose, still
-  over Wi-Fi unless you allow mobile data. A Whisper Small download from before stays in use without
-  asking. Switch models or delete one you no longer use under Models.
+- Choose your speech model. On first launch Dictator lists the models best first, with the size,
+  languages, accuracy and speed of each. Switch models or delete one you no longer use under Models.
+- A second speech model: NVIDIA Parakeet TDT 0.6B v2 (English only, the most accurate, about
+  661 MB), run on the phone with sherpa-onnx. Whisper Small (about 190 MB) stays available and is
+  the one to use for Dansk. Parakeet is licensed CC-BY-4.0 and credited in the license notices.
+- Dictation is one floating microphone. It appears when a text field is focused and is hidden
+  otherwise. Tap to start and stop, hold to talk, drag to move it. Your own keyboard stays (ADR 0007).
+- Undo Last Dictation on the floating microphone, as on Mac and iOS.
+- Signed releases: a signed universal APK for sideloading and a signed AAB, each with a `.sha256`
+  checksum, on the GitHub release. The workflow checks the APK signature and refuses a debug key.
 
 ### Changed
-- Releases attach a `.sha256` next to the signed APK and AAB. The Release workflow checks the APK
-  signature with `apksigner` and refuses a debug key, and stops early if a signing secret is missing.
-- Dictation is one floating microphone. It appears when a text field is focused, and it is hidden
-  otherwise. Tap to start and stop, hold to talk, drag to move it. Your own keyboard stays, and
-  text is typed into the focused field. There is no second shortcut that turns dictation on and
-  off. The Dictator keyboard is gone, which also removes the error some apps showed when switching
-  away from it (ADR 0007, supersedes the keyboard interaction in ADR 0001).
-- Transcription uses the length of the clip instead of a full 30-second Whisper window, and runs on
-  the phone's fast cores, so a short dictation finishes sooner. Same model.
-- The speech model is no longer bundled. After install, the app shows its size (about 190 MB) and
-  downloads it only when you tap Download, over Wi-Fi unless you allow mobile data. The download
-  resumes, retries and checks every file against a SHA-256 manifest built into the app (ADR 0006,
-  supersedes ADR 0004). Audio never leaves the device; the model download is the only network use,
-  so the app now has the `INTERNET` permission.
+- No automatic download. Models are no longer bundled; Dictator downloads only the model you chose,
+  and only after you tap Download, over Wi-Fi unless you allow mobile data. Downloads resume, retry
+  and are checked against a SHA-256 manifest built into the app (ADR 0006, ADR 0008). Audio never
+  leaves the device; the model download is the only network use (`INTERNET` permission).
+  A Whisper Small download from before stays in use without asking.
+- The Dictator keyboard is gone, which also removes the error some apps showed when switching away
+  from it.
+- Whisper transcribes only the length of the clip, on the fast cores, so short dictations finish
+  sooner.
 - Third-party notices: OpenAI's Whisper weights are MIT licensed, not Apache 2.0.
 
-### Added
-- Undo Last Dictation on the floating microphone (parity with Mac and iOS). Shown after a
-  successful insert while Ready; hidden after typing elsewhere or when Try again / Discard are up.
-- `scripts/build-universal-apk.sh` builds one APK for sideloading.
-- Release workflow: on a `v*` tag, a signed AAB and a signed universal APK on a GitHub release,
-  and a draft upload to Play's internal track once a Play service account is configured.
-- Play store listing, Data safety and content rating answers in `docs/play-store.md`.
+### Fixed
+- Long dictations could lose text: a dictation is now typed in one field write instead of chunks
+  that could overwrite each other.
+- An empty field's placeholder ("Message", "Search") is no longer treated as text, so dictation no
+  longer lands next to it or gets spaced against it.
 
 ## [0.1.0] - 2026-10-10
 
