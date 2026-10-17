@@ -42,12 +42,15 @@ class FloatingMicTileService : TileService() {
     override fun onClick() {
         super.onClick()
         unlockAndRun {
-            if (FloatingButtonService.running.value) {
-                FloatingButtonService.hide(this)
-            } else {
+            val turningOn = !FloatingButtonService.running.value
+            if (turningOn) {
                 // Notifications permission stays in setup; the foreground service can start without it.
                 FloatingButtonService.show(this)
+            } else {
+                FloatingButtonService.hide(this)
             }
+            // Flip immediately; [onStartListening] collect confirms when the service catches up.
+            refresh(turningOn)
         }
     }
 
@@ -55,9 +58,11 @@ class FloatingMicTileService : TileService() {
         val tile = qsTile ?: return
         tile.state = if (running) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         tile.label = getString(R.string.tile_floating_mic)
+        tile.subtitle = getString(if (running) R.string.tile_floating_mic_on else R.string.tile_floating_mic_off)
         tile.icon = Icon.createWithResource(this, R.drawable.ic_logo)
         tile.contentDescription =
-            getString(if (running) R.string.setup_button_on else R.string.setup_button_off)
+            getString(R.string.tile_floating_mic) + ", " +
+                getString(if (running) R.string.tile_floating_mic_on else R.string.tile_floating_mic_off)
         tile.updateTile()
     }
 }
