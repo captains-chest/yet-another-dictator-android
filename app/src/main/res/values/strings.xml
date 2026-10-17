@@ -17,6 +17,8 @@
     <string name="setup_button_on">Tap to toggle · hold to talk</string>
     <string name="setup_button_off">Tap to show it in text fields</string>
     <string name="tile_floating_mic">Floating mic</string>
+    <string name="tile_floating_mic_on">On</string>
+    <string name="tile_floating_mic_off">Off</string>
 
     <string name="microphone_footnote">Dictator listens only while you dictate, and transcribes on this phone. Audio is never saved.</string>
 
