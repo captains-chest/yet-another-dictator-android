@@ -62,7 +62,7 @@ class FloatingMicTileService : TileService() {
         tile.icon = Icon.createWithResource(this, R.drawable.ic_logo)
         tile.contentDescription =
             getString(R.string.tile_floating_mic) + ", " +
-                getString(if (running) R.string.tile_floating_mic_on else R.string.tile_floating_mic_off)
+            getString(if (running) R.string.tile_floating_mic_on else R.string.tile_floating_mic_off)
         tile.updateTile()
     }
 }
