@@ -86,7 +86,7 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
         // background, is what Android 14 refuses, and that would make the first dictation fail.
         microphoneType = true
         if (!enterForeground()) return
-        mutableRunning.value = true
+        setRunning(true)
         transcriber = ChosenModelTranscriber(this)
         val fields =
             object : FocusedField {
@@ -202,9 +202,14 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
         }
         scope.cancel()
         if (::transcriber.isInitialized) transcriber.close()
-        mutableRunning.value = false
+        setRunning(false)
         if (instance == this) instance = null
         super.onDestroy()
+    }
+
+    private fun setRunning(value: Boolean) {
+        mutableRunning.value = value
+        FloatingMicTileService.requestUpdate(this)
     }
 
     override fun onBind(intent: Intent?) = null
