@@ -6,6 +6,11 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Quick Settings tile ("Floating mic") to show or hide the floating microphone, matching the setup
+  toggle. Add it once under Edit tiles; state stays in sync with the app and the notification stop
+  action (next Play closed release after 0.3.1, e.g. 0.3.2).
+
 ### Changed
 - New look, from captains-chest.com: wood boards, gold coins and moss on a night-sea background, in
   light and dark mode alike. Setup is three steps with switches (microphone, typing, floating mic),

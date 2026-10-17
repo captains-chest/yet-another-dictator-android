@@ -4,6 +4,8 @@
 - Note (2026-10-15): the button's look (logo, colours, cookie shape) is now [ADR 0009](0009-captains-chest-look.md).
 - Amended (2026-10-15): a status pane may open beside the button during a dictation; the button
   itself still never moves. See "The pane" below.
+- Amended (2026-10-17): a Quick Settings tile can show or hide the floating microphone (same as
+  setup's Floating mic row). Accessibility enablement is unchanged.
 - Date: 2026-10-11
 - Supersedes: the interaction in [ADR 0001](0001-capture-in-the-keyboard.md)
 
@@ -58,8 +60,8 @@ The pipeline itself (record, transcribe on device, type, no clipboard, nothing s
   survive leaving Dictator. It takes the microphone foreground-service type when the user shows it,
   while the app is still open; Android 14 will not add that type later from the background. The
   microphone itself still opens only for a dictation, and the audio is still dropped afterwards.
-- The service is started by the user from the app, and stopped from the app or the notification.
-  It is not started at boot.
+- The service is started by the user from the app or the Quick Settings "Floating mic" tile, and
+  stopped from the app, the tile, or the notification. It is not started at boot.
 
 ## Consequences
 
