@@ -25,6 +25,7 @@ hand-off (ADR 0007, which supersedes the interaction in ADR 0001).
 Floating button (FloatingButtonService)
   └─ MicrophoneRecorder: AudioRecord → CaptureBuffer (16 kHz mono float)
   └─ ChosenModelTranscriber (the model picked on first launch, ADR 0008)
+       │  dictations over 30 s go piece by piece, cut at pauses (LongAudioSplitter)
        ├─ ParakeetTranscriber → sherpa-onnx (Parakeet TDT 0.6B v2 int8, CPU)
        └─ WhisperTranscriber → JNI → whisper.cpp (Whisper Small q5_1)
      both loaded only from app storage after the opt-in download (ADR 0006)

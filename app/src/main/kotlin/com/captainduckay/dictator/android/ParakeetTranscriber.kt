@@ -127,9 +127,14 @@ class ChosenModelTranscriber(
         current.prepare()
     }
 
+    /**
+     * A dictation over 30 s is transcribed piece by piece, cut at pauses, so Whisper never splits a
+     * word at a window boundary and Parakeet never reads more than 30 s at once (see
+     * [LongAudioSplitter]). Shorter dictations go to the engine unchanged.
+     */
     override suspend fun transcribe(samples: FloatArray, language: String?): String {
         val current = mutex.withLock { engine } ?: throw NoModel()
-        return current.transcribe(samples, language)
+        return LongAudioSplitter.transcribe(samples) { piece -> current.transcribe(piece, language) }
     }
 
     fun close() {
