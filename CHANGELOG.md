@@ -20,6 +20,12 @@ All notable changes are documented here. The format follows
   5.6 MB smaller uncompressed (about 1 MB smaller to download on a phone), and builds no longer need
   the Android NDK or CMake.
 
+### Fixed
+- Dictations longer than 30 seconds no longer lose words or run out of memory. Parakeet read the
+  whole recording at once, which takes a lot of memory for a long dictation and fails past about
+  400 seconds. Long recordings are now cut at a pause into pieces of at most 30 seconds, and no
+  piece is too short to be transcribed, as on Mac and iOS.
+
 ## [0.4.0] - 2026-10-21
 
 ### Added
