@@ -41,3 +41,7 @@ so Whisper Small stays for Automatic or English. The macOS and iOS apps get the 
 - Parakeet is a larger download than Whisper Small (661 vs 190 MB) and needs more memory while
   loaded. Measure latency and memory on a real arm64 phone.
 - One more pinned native dependency, outside Dependabot; bump it by hand like whisper.cpp.
+- (2026-10-19) "No 30-second window" doesn't mean any length: Parakeet's memory grows with the
+  clip, and the ONNX export is reported to fail past about 400 s, under the 10-minute limit. Both
+  models therefore get dictations over 30 s in pieces cut at pauses (`LongAudioSplitter`, as on Mac
+  and iOS).

@@ -6,6 +6,13 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- Dictations longer than 30 seconds no longer lose words. Whisper hears 30 seconds at a time, and
+  the audio was cut into fixed 30-second pieces, so a word on a cut could be split or lost. Parakeet
+  read the whole recording at once, which takes a lot of memory for a long dictation and fails past
+  about 400 seconds. Long recordings are now cut at a pause into pieces of at most 30 seconds, and
+  no piece is too short to be transcribed, as on Mac and iOS.
+
 ### Added
 - Quick Settings tile ("Floating mic") to show or hide the floating microphone, matching the setup
   toggle. Add it once under Edit tiles; state stays in sync with the app and the notification stop
