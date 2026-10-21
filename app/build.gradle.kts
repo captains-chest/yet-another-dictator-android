@@ -21,7 +21,7 @@ android {
         targetSdk = 36
         // CI passes the tag's version and a run-based code; local builds use these defaults.
         versionCode = (System.getenv("VERSION_CODE") ?: "3").toInt()
-        versionName = System.getenv("VERSION_NAME") ?: "0.3.2"
+        versionName = System.getenv("VERSION_NAME") ?: "0.4.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             // arm64 for phones, x86_64 for the emulator (ADR 0002).

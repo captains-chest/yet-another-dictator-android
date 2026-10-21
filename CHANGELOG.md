@@ -6,7 +6,7 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.3.2] - 2026-10-21
+## [0.4.0] - 2026-10-21
 
 ### Added
 - Quick Settings tile ("Floating mic") to show or hide the floating microphone, matching the setup
