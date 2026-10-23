@@ -258,7 +258,7 @@ class FloatingButtonService : Service(), BubblePanel.Listener {
                 // A process restart may have had to drop the microphone type. The finger is the
                 // user gesture that lets us ask for it again, before AudioRecord starts.
                 setMicrophoneType(true)
-                // Dictator is English-only: Whisper is told so, Parakeet only knows English.
+                // Dictator is English-only, like both Parakeet models.
                 controller.language = DictationLanguage.ENGLISH
                 controller.pressed()
             }

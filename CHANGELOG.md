@@ -6,6 +6,20 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Speech models are now Parakeet only. Next to Parakeet 0.6B (most accurate, about 661 MB) there is
+  a new choice, NVIDIA Parakeet TDT-CTC 110M (smallest and fastest, about 132 MB, with punctuation
+  and capitals). It downloads only after you pick it, with the usual Wi-Fi or mobile data question
+  (ADR 0010).
+- If you had picked Whisper Small, the model picker shows again on first launch so you can choose a
+  Parakeet model. An already downloaded Parakeet model is used straight away instead. The old Whisper
+  download (about 190 MB) is deleted in the background, and nothing else is touched.
+
+### Removed
+- Whisper Small and the whisper.cpp native library (JNI bridge and CMake build). The app is about
+  5.6 MB smaller uncompressed (about 1 MB smaller to download on a phone), and builds no longer need
+  the Android NDK or CMake.
+
 ## [0.4.0] - 2026-10-21
 
 ### Added

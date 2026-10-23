@@ -90,6 +90,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val settings = Settings(this)
         val whatsNew = whatsNewDecision(settings)
+        // Free a retired model's leftover download, and only that, off the main thread (ADR 0010).
+        Thread { SpeechModel.removeRetired(applicationContext) }.start()
         setContent { DictatorTheme { RootScreen(whatsNew) } }
     }
 
@@ -427,7 +429,7 @@ private fun TryIt() {
     }
 }
 
-/** The model at launch: the saved choice, or a verified Whisper download from before the picker. */
+/** The model at launch: the saved choice, or a verified download when nothing (or a retired model) is chosen. */
 private fun startupModel(context: android.content.Context): SpeechModelId? =
     when (val start = ModelStartup.decide(SpeechModel.chosen(context), SpeechModel.installed(context))) {
         ModelStartup.ShowPicker -> null
@@ -446,8 +448,8 @@ private fun megabytes(bytes: Long) = String.format(Locale.ROOT, "%.0f", bytes / 
 /** The card's short name; the full one is in the picker and the download text. */
 private fun shortName(model: SpeechModelId) =
     when (model) {
-        SpeechModelId.PARAKEET_V2 -> "Parakeet"
-        SpeechModelId.WHISPER_SMALL -> "Whisper Small"
+        SpeechModelId.PARAKEET_V2 -> "Parakeet 0.6B"
+        SpeechModelId.PARAKEET_110M -> "Parakeet 110M"
     }
 
 @Composable
@@ -455,7 +457,7 @@ private fun shortNote(model: SpeechModelId) =
     stringResource(
         when (model) {
             SpeechModelId.PARAKEET_V2 -> R.string.model_parakeet_note
-            SpeechModelId.WHISPER_SMALL -> R.string.model_whisper_note
+            SpeechModelId.PARAKEET_110M -> R.string.model_parakeet_small_note
         },
     )
 
@@ -464,7 +466,7 @@ private fun accuracyNote(model: SpeechModelId) =
     stringResource(
         when (model) {
             SpeechModelId.PARAKEET_V2 -> R.string.model_parakeet_accuracy
-            SpeechModelId.WHISPER_SMALL -> R.string.model_whisper_accuracy
+            SpeechModelId.PARAKEET_110M -> R.string.model_parakeet_small_accuracy
         },
     )
 
@@ -473,7 +475,7 @@ private fun speedNote(model: SpeechModelId) =
     stringResource(
         when (model) {
             SpeechModelId.PARAKEET_V2 -> R.string.model_parakeet_speed
-            SpeechModelId.WHISPER_SMALL -> R.string.model_whisper_speed
+            SpeechModelId.PARAKEET_110M -> R.string.model_parakeet_small_speed
         },
     )
 
