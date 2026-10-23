@@ -25,9 +25,11 @@ Focus a text field and the microphone appears. Tap it and speak into the field y
 Your keyboard stays. Tap again to finish, or hold the button while you talk and let go when you
 are done. Dictator types the text where your cursor is, with the right spacing and capital letters.
 
-• Private. Speech recognition runs on your phone with OpenAI's Whisper model. Audio never leaves the
-  device; the one-time model download (about 190 MB, Wi-Fi recommended) is the only network use.
-• English. Choose Parakeet (most accurate) or Whisper Small (smaller download).
+• Private. Speech recognition runs on your phone with NVIDIA's Parakeet models. Audio never leaves
+  the device; the one-time model download (about 132 MB or 661 MB, Wi-Fi recommended) is the only
+  network use.
+• English, with punctuation. Choose Parakeet 0.6B (most accurate) or Parakeet 110M (smallest,
+  fastest).
 • Nothing is stored. Audio is kept in memory only while a dictation is transcribed, then
   discarded. Dictator keeps no history and never uses the clipboard.
 • Microphone only while you dictate. Android's microphone indicator shows exactly when Dictator
@@ -37,7 +39,7 @@ are done. Dictator types the text where your cursor is, with the right spacing a
 Dictator is open source (MIT) and part of the Yet Another Dictator family for macOS, iOS and
 Android: https://github.com/captains-chest/yet-another-dictator-android
 
-Requires Android 12 or later. After install, download the speech model once (about 190 MB). Turn
+Requires Android 12 or later. After install, download a speech model once (about 132 MB or 661 MB). Turn
 Dictator on under Accessibility; the microphone then appears when a text field is focused and
 types into it. No draw-over-other-apps permission is needed.
 ```
@@ -45,6 +47,15 @@ types into it. No draw-over-other-apps permission is needed.
 ## Store listing — Danish (da-DK)
 
 Withdrawn 2026-10-15: Dictator is English-only. Do not publish a da-DK listing.
+
+## Size notes
+
+- The app itself (AAB base module, both ABIs, uncompressed) is 70.7 MB, down from 76.3 MB, since
+  Whisper's native library is gone (ADR 0010). The Play download for an arm64 phone
+  (bundletool `get-size total`) is 13.2 MB, down from 14.2 MB, and 2.7 MB less is installed.
+  Nearly all of the rest is sherpa-onnx and ONNX Runtime.
+- No model ships in the app. The chosen one is downloaded after install: Parakeet 110M is
+  131.7 MB, Parakeet 0.6B is 661 MB (ADR 0006, ADR 0008).
 
 ## Graphics still needed
 
