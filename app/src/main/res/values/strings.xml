@@ -75,9 +75,9 @@
     <string name="action_cancel">Cancel</string>
     <string name="model_footnote">Downloading the speech model you choose, from Hugging Face, is the only network use. Every file is checked against a SHA-256 hash built into the app. Your audio never leaves the device.</string>
     <string name="model_parakeet_accuracy" formatted="false">Most accurate for English (6.1% average word error rate on the Open ASR Leaderboard).</string>
-    <string name="model_whisper_accuracy">Less accurate than Parakeet; smaller download.</string>
-    <string name="model_parakeet_speed">Fast on the phone\'s CPU, without Whisper\'s 30-second windows.</string>
-    <string name="model_whisper_speed">Slower on long dictations; smaller download.</string>
+    <string name="model_parakeet_small_accuracy">A little less accurate than Parakeet 0.6B, with punctuation and capitals; a fifth of the download.</string>
+    <string name="model_parakeet_speed">Fast on the phone\'s CPU, with no 30-second windows.</string>
+    <string name="model_parakeet_small_speed">The fastest: about five times smaller, so it loads and transcribes quickest on the phone\'s CPU.</string>
     <string name="model_recommended">%1$s (recommended)</string>
     <string name="model_meta_english">%1$s MB download · English only</string>
     <string name="model_picker_title">Choose a speech model</string>
@@ -87,7 +87,7 @@
     <string name="model_in_use">In use</string>
     <string name="model_size">%1$s MB</string>
     <string name="model_parakeet_note">Most accurate · fast</string>
-    <string name="model_whisper_note">Smaller · slower</string>
+    <string name="model_parakeet_small_note">Smallest · fastest</string>
     <string name="action_delete_named">Delete %1$s</string>
     <string name="model_switch_busy">Cancel the running download to switch models.</string>
     <string name="model_none_chosen">Choose a speech model above. Nothing is downloaded until you choose one and tap Download.</string>

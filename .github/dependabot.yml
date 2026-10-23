@@ -2,8 +2,8 @@
 # the repository settings and are not limited by this schedule.
 version: 2
 updates:
-  # gradle/libs.versions.toml and the Gradle wrapper. whisper.cpp (a CMake download) and the model
-  # (scripts/model-manifest.txt) are pinned by SHA-256 and must be bumped by hand.
+  # gradle/libs.versions.toml and the Gradle wrapper. The sherpa-onnx AAR (app/build.gradle.kts) and
+  # the models (scripts/model-manifest.txt) are pinned by SHA-256 and must be bumped by hand.
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:

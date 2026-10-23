@@ -1,6 +1,7 @@
 # 8. Let the user choose the speech model; download only that one
 
-- Status: Accepted
+- Status: Accepted; amended by [ADR 0010](0010-parakeet-lineup.md) (the models are now Parakeet
+  TDT 0.6B v2 and Parakeet TDT-CTC 110M; Whisper Small is removed)
 - Note (2026-10-15): Dictator is English-only; Dansk is no longer offered.
 - Date: 2026-10-14
 - Supersedes: the "Whisper Small is the model" part of [ADR 0006](0006-download-model-after-install.md)

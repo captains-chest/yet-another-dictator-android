@@ -18,9 +18,6 @@ object SpeechModel {
     private const val MANIFEST_ASSET = "model/model-manifest.txt"
     private const val COMPLETE_MARKER = ".complete"
 
-    /** Whisper's single ggml file. */
-    const val WHISPER_FILE_NAME = "ggml-small-q5_1.bin"
-
     fun manifest(context: Context): ModelManifest =
         ModelManifest.parse(
             context.assets
@@ -37,7 +34,7 @@ object SpeechModel {
     fun displayName(model: SpeechModelId): String =
         when (model) {
             SpeechModelId.PARAKEET_V2 -> "NVIDIA Parakeet TDT 0.6B v2"
-            SpeechModelId.WHISPER_SMALL -> "Whisper Small (q5_1)"
+            SpeechModelId.PARAKEET_110M -> "NVIDIA Parakeet TDT-CTC 110M"
         }
 
     fun downloadBytes(context: Context, model: SpeechModelId): Long = manifest(context).totalBytes(model.id)
@@ -74,6 +71,19 @@ object SpeechModel {
     fun removeStale(context: Context) {
         val keep = manifest(context).modelIds.toSet()
         File(context.filesDir, "models").listFiles()?.filter { it.name !in keep }?.forEach { it.deleteRecursively() }
+    }
+
+    /**
+     * Deletes the folders of retired models only ([SpeechModelId.retiredIds], i.e. the third model
+     * offered up to 0.4.0), which no engine in this version can read (ADR 0010). Nothing else is
+     * touched. Blocking file I/O: call it off the main thread.
+     */
+    fun removeRetired(context: Context) {
+        val models = File(context.filesDir, "models")
+        SpeechModelId.retiredIds
+            .map { File(models, it) }
+            .filter { it.exists() }
+            .forEach { it.deleteRecursively() }
     }
 
     private val mutableChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
