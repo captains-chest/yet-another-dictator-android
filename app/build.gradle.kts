@@ -9,8 +9,6 @@ plugins {
 android {
     namespace = "com.captainduckay.dictator.android"
     compileSdk = 37
-    ndkVersion = "28.2.13676358"
-
     // `-PtestBuildType=release` builds the device test against the signed release build, so the
     // JFK test can run on a phone that has the release APK installed.
     testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
@@ -24,7 +22,7 @@ android {
         versionName = System.getenv("VERSION_NAME") ?: "0.4.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
-            // arm64 for phones, x86_64 for the emulator (ADR 0002).
+            // Package sherpa-onnx's native libraries for arm64 phones and the x86_64 emulator only (ADR 0003).
             abiFilters += listOf("arm64-v8a", "x86_64")
         }
     }
@@ -39,13 +37,6 @@ android {
                 keyAlias = System.getenv("ANDROID_UPLOAD_KEY_ALIAS")
                 keyPassword = System.getenv("ANDROID_UPLOAD_KEY_PASSWORD")
             }
-        }
-    }
-
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.31.6"
         }
     }
 
