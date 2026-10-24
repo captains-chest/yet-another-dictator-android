@@ -41,6 +41,12 @@ android {
     }
 
     buildTypes {
+        // Test build only (branch test/parakeet-110m-plus-splitting, never merged): a separate app
+        // id so it installs next to the Play build without touching its settings or models.
+        debug {
+            applicationIdSuffix = ".test"
+            versionNameSuffix = "-test"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
