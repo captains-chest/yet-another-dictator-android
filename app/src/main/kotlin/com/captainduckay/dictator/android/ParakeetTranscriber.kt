@@ -1,10 +1,12 @@
 package com.captainduckay.dictator.android
 
 import android.content.Context
+import com.captainduckay.dictator.core.RecognizerSetup
 import com.captainduckay.dictator.core.SpeechModelId
 import com.captainduckay.dictator.core.Transcribing
 import com.k2fsa.sherpa.onnx.FeatureConfig
 import com.k2fsa.sherpa.onnx.OfflineModelConfig
+import com.k2fsa.sherpa.onnx.OfflineNemoEncDecCtcModelConfig
 import com.k2fsa.sherpa.onnx.OfflineRecognizer
 import com.k2fsa.sherpa.onnx.OfflineRecognizerConfig
 import com.k2fsa.sherpa.onnx.OfflineTransducerModelConfig
@@ -18,13 +20,19 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
- * NVIDIA Parakeet TDT 0.6B v2 (English, int8) through sherpa-onnx (ADR 0008), on the CPU. Loads only
- * from the verified folder the app downloaded; sherpa-onnx never downloads. English only, so
- * [transcribe] ignores the language. Audio never leaves the device.
+ * An NVIDIA Parakeet model (English, int8) through sherpa-onnx, on the CPU: TDT 0.6B v2 as a
+ * transducer (ADR 0008) or TDT-CTC 110M through its CTC branch (ADR 0010). Loads only from the
+ * verified folder the app downloaded; sherpa-onnx never downloads. English only, so [transcribe]
+ * ignores the language. Audio never leaves the device.
  */
 class ParakeetTranscriber(
     private val context: Context,
+    private val model: SpeechModelId,
 ) : Transcribing {
+    class ModelMissing : Exception(
+        "The speech model isn't downloaded yet. Open Dictator to download it.",
+    )
+
     class LoadFailed : Exception("The speech model could not be loaded.")
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -38,26 +46,8 @@ class ParakeetTranscriber(
         mutex.withLock {
             if (recognizer != null) return@withLock
             withContext(dispatcher) {
-                val model = SpeechModelId.PARAKEET_V2
-                if (!SpeechModel.isInstalled(context, model)) throw WhisperTranscriber.ModelMissing()
-                val folder = SpeechModel.folder(context, model)
-                val config =
-                    OfflineRecognizerConfig(
-                        featConfig = FeatureConfig(sampleRate = SAMPLE_RATE, featureDim = FEATURE_DIM),
-                        modelConfig =
-                            OfflineModelConfig(
-                                transducer =
-                                    OfflineTransducerModelConfig(
-                                        encoder = File(folder, "encoder.int8.onnx").path,
-                                        decoder = File(folder, "decoder.int8.onnx").path,
-                                        joiner = File(folder, "joiner.int8.onnx").path,
-                                    ),
-                                tokens = File(folder, "tokens.txt").path,
-                                modelType = "nemo_transducer",
-                                numThreads = threads,
-                            ),
-                        decodingMethod = "greedy_search",
-                    )
+                if (!SpeechModel.isInstalled(context, model)) throw ModelMissing()
+                val config = recognizerConfig(RecognizerSetup.of(model), SpeechModel.folder(context, model), threads)
                 recognizer =
                     try {
                         OfflineRecognizer(config = config)
@@ -91,9 +81,44 @@ class ParakeetTranscriber(
     }
 
     private companion object {
-        const val SAMPLE_RATE = 16_000
-        const val FEATURE_DIM = 80
+        const val SAMPLE_RATE = RecognizerSetup.SAMPLE_RATE
     }
+}
+
+/**
+ * The sherpa-onnx configuration for [setup], with files from [folder]. Pure, so the unit tests check
+ * that the 110M is loaded as NeMo CTC and the 0.6B as a NeMo transducer.
+ */
+internal fun recognizerConfig(setup: RecognizerSetup, folder: File, threads: Int): OfflineRecognizerConfig {
+    fun path(name: String) = File(folder, name).path
+    val tokens = path(setup.tokens)
+    val modelConfig =
+        when (setup) {
+            is RecognizerSetup.NemoTransducer ->
+                OfflineModelConfig(
+                    transducer =
+                        OfflineTransducerModelConfig(
+                            encoder = path(setup.encoder),
+                            decoder = path(setup.decoder),
+                            joiner = path(setup.joiner),
+                        ),
+                    tokens = tokens,
+                    modelType = setup.modelType,
+                    numThreads = threads,
+                )
+            is RecognizerSetup.NemoCtc ->
+                OfflineModelConfig(
+                    nemo = OfflineNemoEncDecCtcModelConfig(model = path(setup.model)),
+                    tokens = tokens,
+                    modelType = setup.modelType,
+                    numThreads = threads,
+                )
+        }
+    return OfflineRecognizerConfig(
+        featConfig = FeatureConfig(sampleRate = RecognizerSetup.SAMPLE_RATE, featureDim = RecognizerSetup.FEATURE_DIM),
+        modelConfig = modelConfig,
+        decodingMethod = RecognizerSetup.DECODING_METHOD,
+    )
 }
 
 /**
@@ -116,10 +141,7 @@ class ChosenModelTranscriber(
                 if (chosen != loaded) {
                     close(engine)
                     engine =
-                        when (chosen) {
-                            SpeechModelId.PARAKEET_V2 -> ParakeetTranscriber(context)
-                            SpeechModelId.WHISPER_SMALL -> WhisperTranscriber(context)
-                        }
+                        ParakeetTranscriber(context, chosen)
                     loaded = chosen
                 }
                 engine!!
@@ -127,9 +149,14 @@ class ChosenModelTranscriber(
         current.prepare()
     }
 
+    /**
+     * A dictation over 30 s is transcribed piece by piece, cut at pauses, so no word is split and
+     * Parakeet never reads more than 30 s at once (see [LongAudioSplitter]). Shorter dictations go
+     * to the engine unchanged.
+     */
     override suspend fun transcribe(samples: FloatArray, language: String?): String {
         val current = mutex.withLock { engine } ?: throw NoModel()
-        return current.transcribe(samples, language)
+        return LongAudioSplitter.transcribe(samples) { piece -> current.transcribe(piece, language) }
     }
 
     fun close() {
@@ -139,9 +166,6 @@ class ChosenModelTranscriber(
     }
 
     private fun close(engine: Transcribing?) {
-        when (engine) {
-            is ParakeetTranscriber -> engine.close()
-            is WhisperTranscriber -> engine.close()
-        }
+        (engine as? ParakeetTranscriber)?.close()
     }
 }

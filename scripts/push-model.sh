@@ -4,7 +4,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-id="${1:-ggml-small-q5_1}"
+id="${1:?usage: scripts/push-model.sh <model-id>, e.g. parakeet-tdt-ctc-110m-en-int8}"
 pkg="com.captainduckay.dictator.android"
 src="$root/build/model/$id"
 [[ -d "$src" ]] || { echo "Run scripts/fetch-model.sh $id first." >&2; exit 1; }

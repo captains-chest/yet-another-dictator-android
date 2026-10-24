@@ -5,14 +5,14 @@ and the [iOS app](https://github.com/captains-chest/yet-another-dictator-ios).
 
 On-device dictation that works in any text field from a floating microphone. Your keyboard stays.
 Uses a Kotlin port of the shared [DictationCore](https://github.com/captains-chest/DictationCore)
-logic and whisper.cpp.
+logic and [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) for speech recognition.
 
 ## Design goals
 
 - **Simple and robust** — same philosophy as the macOS app: no fancy features, just reliable dictation.
 - **Platform native** — a floating microphone, in the Captain's Chest look (ADR 0009), English UI.
 - **Hold** = push-to-talk, **tap** = toggle (same dual-mode as the macOS hotkey and the iOS keyboard).
-- **Your choice of model** — NVIDIA Parakeet TDT 0.6B v2 (English, most accurate, int8, about 661 MB, via sherpa-onnx) or Whisper Small (q5_1, English, 190 MB, via whisper.cpp), on-device. Picked on first launch; only the chosen one is downloaded, after you confirm (Wi-Fi recommended).
+- **Your choice of model** — NVIDIA Parakeet TDT 0.6B v2 (English, most accurate, int8, about 661 MB) or NVIDIA Parakeet TDT-CTC 110M (English, smallest and fastest, int8, about 132 MB), both via sherpa-onnx, on-device (ADR 0010). Picked on first launch; only the chosen one is downloaded, after you confirm (Wi-Fi recommended).
 - **Shared core** — pure logic lives in `core`, a tested Kotlin port of DictationCore (ADR 0005).
 
 ## Architecture
@@ -25,9 +25,11 @@ hand-off (ADR 0007, which supersedes the interaction in ADR 0001).
 Floating button (FloatingButtonService)
   └─ MicrophoneRecorder: AudioRecord → CaptureBuffer (16 kHz mono float)
   └─ ChosenModelTranscriber (the model picked on first launch, ADR 0008)
-       ├─ ParakeetTranscriber → sherpa-onnx (Parakeet TDT 0.6B v2 int8, CPU)
-       └─ WhisperTranscriber → JNI → whisper.cpp (Whisper Small q5_1)
-     both loaded only from app storage after the opt-in download (ADR 0006)
+       │  dictations over 30 s go piece by piece, cut at pauses (LongAudioSplitter)
+       └─ ParakeetTranscriber → sherpa-onnx, CPU
+            ├─ Parakeet TDT 0.6B v2 int8 (transducer)
+            └─ Parakeet TDT-CTC 110M int8 (CTC head, ADR 0010)
+     either loaded only from app storage after the opt-in download (ADR 0006)
   └─ DictationController
   └─ AccessibilityFieldEditor → the focused field (chunked, cancellable), SmartJoin context
 App (MainActivity, Jetpack Compose)
@@ -42,8 +44,8 @@ so Android's microphone indicator is only on then.
 
 ## Build
 
-Requires JDK 17+, the Android SDK (compileSdk 37) and NDK 28.2.13676358 with CMake 3.31.6.
-Gradle downloads whisper.cpp 1.9.5 (pinned by SHA-256) the first time it builds the native code.
+Requires JDK 17+ and the Android SDK (compileSdk 37). No NDK or CMake: the only native code is the
+prebuilt sherpa-onnx AAR, which Gradle downloads (pinned by SHA-256) the first time it builds.
 
 ```sh
 ./gradlew bundleRelease         # the AAB for Play (no model inside; sherpa-onnx adds ~32 MB per ABI)
@@ -70,7 +72,7 @@ https://captains-chest.com/dictator/privacy
 ./gradlew ktlintCheck lint      # Kotlin style and Android lint
 scripts/build-universal-apk.sh && ./gradlew -PtestBuildType=release assembleReleaseAndroidTest   # download the model in the app first
 adb install build/dictator-universal.apk && adb install app/build/outputs/apk/androidTest/release/app-release-androidTest.apk
-adb shell am instrument -w com.captainduckay.dictator.android.test/androidx.test.runner.AndroidJUnitRunner   # JFK sample, JNI + model
+adb shell am instrument -w com.captainduckay.dictator.android.test/androidx.test.runner.AndroidJUnitRunner   # JFK sample, both models (each skips if not downloaded)
 ```
 
 Then: install, open Dictator, allow the microphone, allow the button to draw over other apps, turn
@@ -97,7 +99,7 @@ Each one is required.
 
 - Android 12 (API 31) or later, arm64 phones (x86_64 is built for the emulator) (ADR 0003).
 - Dependencies are pinned in `gradle/libs.versions.toml`; Dependabot proposes bumps as PRs.
-  whisper.cpp, the sherpa-onnx AAR (fetched at build time from its GitHub release, see
+  The sherpa-onnx AAR (fetched at build time from its GitHub release, see
   `app/build.gradle.kts`) and the models are pinned by SHA-256 and bumped by hand.
 
 ## Privacy rules (same as the macOS and iOS apps)
@@ -114,8 +116,8 @@ These are requirements for every change:
 
 ## Status
 
-The floating button, the app, the JNI bridge and the model download are in place, and CI builds and
-tests them. Not yet measured on a real phone: latency after the shorter Whisper window, peak memory
+The floating button, the app, both Parakeet models and the model download are in place, and CI
+builds and tests them. Not yet measured on a real phone: latency of each Parakeet model, peak memory
 while the button is showing, English quality, and how typing behaves in apps whose fields
 are not exposed to accessibility (ADR 0007, 0002), and the download on a real network (ADR 0006).
 

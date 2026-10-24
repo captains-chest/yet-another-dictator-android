@@ -1,6 +1,7 @@
 # 8. Let the user choose the speech model; download only that one
 
-- Status: Accepted
+- Status: Accepted; amended by [ADR 0010](0010-parakeet-lineup.md) (the models are now Parakeet
+  TDT 0.6B v2 and Parakeet TDT-CTC 110M; Whisper Small is removed)
 - Note (2026-10-15): Dictator is English-only; Dansk is no longer offered.
 - Date: 2026-10-14
 - Supersedes: the "Whisper Small is the model" part of [ADR 0006](0006-download-model-after-install.md)
@@ -41,3 +42,7 @@ so Whisper Small stays for Automatic or English. The macOS and iOS apps get the 
 - Parakeet is a larger download than Whisper Small (661 vs 190 MB) and needs more memory while
   loaded. Measure latency and memory on a real arm64 phone.
 - One more pinned native dependency, outside Dependabot; bump it by hand like whisper.cpp.
+- (2026-10-19) "No 30-second window" doesn't mean any length: Parakeet's memory grows with the
+  clip, and the ONNX export is reported to fail past about 400 s, under the 10-minute limit. Both
+  models therefore get dictations over 30 s in pieces cut at pauses (`LongAudioSplitter`, as on Mac
+  and iOS).

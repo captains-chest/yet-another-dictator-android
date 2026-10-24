@@ -1,6 +1,6 @@
 # 2. On-device recognition with whisper.cpp through JNI
 
-- Status: Accepted
+- Status: Superseded by [ADR 0010](0010-parakeet-lineup.md) (whisper.cpp and Whisper Small are removed)
 - Note (2026-10-15): Dictator is English-only; Dansk is no longer offered.
 - Date: 2026-10-10
 
