@@ -6,6 +6,8 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-27
+
 ### Changed
 - Speech models are now Parakeet only. Next to Parakeet 0.6B (most accurate, about 661 MB) there is
   a new choice, NVIDIA Parakeet TDT-CTC 110M (smallest and fastest, about 132 MB, with punctuation
