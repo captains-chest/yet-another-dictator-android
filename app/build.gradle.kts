@@ -19,7 +19,7 @@ android {
         targetSdk = 36
         // CI passes the tag's version and a run-based code; local builds use these defaults.
         versionCode = (System.getenv("VERSION_CODE") ?: "3").toInt()
-        versionName = System.getenv("VERSION_NAME") ?: "0.4.0"
+        versionName = System.getenv("VERSION_NAME") ?: "0.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             // Package sherpa-onnx's native libraries for arm64 phones and the x86_64 emulator only (ADR 0003).
