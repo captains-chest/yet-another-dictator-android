@@ -6,6 +6,11 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- Updated sherpa-onnx, the engine that runs the Parakeet models, from 1.13.8 to 2.0.1. It
+  includes the upstream fix for native errors crashing the app instead of being reported
+  (k2-fsa/sherpa-onnx#3988). The AAR stays pinned by SHA-256.
+
 ## [0.5.0] - 2026-10-27
 
 ### Changed
