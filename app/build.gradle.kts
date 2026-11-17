@@ -90,8 +90,8 @@ tasks.named("preBuild") { dependsOn(bundleDocs, bundleModelManifest) }
 // sherpa-onnx runs the Parakeet model (ADR 0008). It isn't published to Maven Central, so the
 // official release AAR is downloaded at build time and must match this pinned SHA-256, the same way
 // the model files are pinned. Bump both together after reviewing the release.
-val sherpaOnnxVersion = "1.13.8"
-val sherpaOnnxSha256 = "633c24321e06b1fe79feafa03ea16cbc0f8a286641e2da3559bac91bdb13bd96"
+val sherpaOnnxVersion = "2.0.1"
+val sherpaOnnxSha256 = "a8d09d1d32f3eb8520482c6d3d43fae674681c5b050385967c70a3c2c9bf0ee7"
 val sherpaOnnxAar = layout.buildDirectory.file("sherpa-onnx/sherpa-onnx-$sherpaOnnxVersion.aar")
 
 val fetchSherpaOnnx =
